@@ -284,10 +284,12 @@ for index in range(len(output_dict['Cyl Model'].split())):
     output_dict[f'Cyl MAWP, {pressure}'].split()[index],
     'Throw '+ output_dict[f'Cylinder Data'].split('Throw')[index + 1],
     ])
-    if stg_data[index] != '---':
-        cylinders[index].append('Stage ' + stg_data[index])
-    else:
-        cylinders[index].append('Stage ' + stg_data[index - 1])
+    # if stg_data[index] != '---':
+    #     cylinders[index].append('Stage ' + stg_data[index])
+    # else:
+    #     temp_index = index - 1
+    #     if stg_data[temp_index] != '---':
+    #         cylinders[index].append('Stage ' + stg_data[temp_index])
 
     print(cylinders[index])
 # print(stg_data)
