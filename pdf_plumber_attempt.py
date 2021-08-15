@@ -267,11 +267,11 @@ num_services = services_lst[-1]
 cyls_list = [f'1{stage}'.split() for stage in output_dict['Stage Data'].split('1')][1:]
 for index in range(len(cyls_list)):
     cyls_list[index] = [cyl for cyl in cyls_list[index] if cyl != '(SG)']
-print(cyls_list)
+# print('cyls_list: ', cyls_list)
 stages_list = {}
 for index in range(len(cyls_list)):
     stages_list[index] = [stage for stage in cyls_list[index] if stage != '---']
-print(stages_list)
+# print('stages_list: ', stages_list)
 
 stg_data = [stg for stg in output_dict[f'Stage Data'].split() if stg != '(SG)']
 
@@ -289,18 +289,12 @@ for index in range(len(output_dict['Cyl Model'].split())):
     output_dict['Cyl Bore, in'].split()[index],
     output_dict[f'Cyl RDP (API), {pressure}'].split()[index],
     output_dict[f'Cyl MAWP, {pressure}'].split()[index],
-    'Throw '+ output_dict[f'Cylinder Data'].split('Throw')[index + 1],
+    'Throw'+ output_dict[f'Cylinder Data'].split('Throw')[index + 1],
     ])
     cylinders[index].append(stg_data_checker(index))
-    # if stg_data[index] != '---':
-    #     cylinders[index].append('Stage ' + stg_data[index])
-    # else:
-    #     temp_index = index - 1
-    #     if stg_data[temp_index] != '---':
-    #         cylinders[index].append('Stage ' + stg_data[temp_index])
 
-    print(cylinders[index])
-# print(stg_data)
+# for cyl in cylinders:
+#     print(cyl)
 
 stages = {}
 stages[f'Total Services'] = num_services
@@ -322,9 +316,17 @@ for service in range(int(num_services)):
     for stage in range(int(stages[f'Service {service + 1} Total Stages'])):
         stages[f'Service {service + 1} Stage {int(stage + 1)} Cylinder'] = cylinders[column_location]
         stages[f'Service {service + 1} Stage {int(stage + 1)} Column Start'] = column_location
+        temp_loc = column_location
         column_location += stages[f'Service {service + 1} Stage {int(stage + 1)}']
+        throws=[cylinders[temp_loc][4].strip()]
+        temp_loc += 1
+        while temp_loc < column_location:
+            throws.append(cylinders[temp_loc][4].strip())
+            temp_loc += 1
+        stages[f'Service {service + 1} Stage {int(stage + 1)} Throws'] = throws
 
-
+# for stage in stages.items():
+#     print(stage)
 
 # In this section we define a few functions that either manipulate our data
 #  into the format the runM requires (pressure in absolute, temp in R) or
@@ -346,7 +348,6 @@ def pressure_corrector(col_start, tot_cyl):
     if g_or_abs == 'Gauge':
         ps_pd[0] = float(output_dict[f'Pres Suct Line, {pressure}'].split()[col_start]) + 13.3
         pd_lst = [pd for pd in output_dict[f'Pres Disch Line, {pressure}'].split()[:col_start+tot_cyl] if pd != '---' and pd != 'N/A']
-        print(pd_lst)
         ps_pd[1] = float(pd_lst[-1]) + 13.3
         return ps_pd
     else:
@@ -368,6 +369,9 @@ def stage_assigner(service):
                 		<product_family>{product_family[output_dict['Frame'][-5:-2]]}</product_family>
                 		<bore_size>{stages[f'Service {service} Stage {stage + 1} Cylinder'][1]}</bore_size>
                 		<loss_factor>0.00704</loss_factor>
+                        <throws>{' '.join(stages[f'Service {service} Stage {int(stage + 1)} Throws'])}</throws>
+                        <nominal>{stages[f'Service {service} Stage {stage + 1} Cylinder'][0]}</nominal>
+                        <mawp>{stages[f'Service {service} Stage {stage + 1} Cylinder'][3]}</mawp>
                 	</Cylinder>
                 </Stage>
             """)
@@ -460,7 +464,7 @@ output_txt = fr"""<?xml version="1.0" encoding=UTF-8 ?>
 </Ariel_Mobile>
 """
 
-# print(output_txt)
+print(output_txt)
 
 # Current program limitaions include inability to select cylinders or cylinder
 #  action / clearance.  This means that the program will autoselect the cylinders
