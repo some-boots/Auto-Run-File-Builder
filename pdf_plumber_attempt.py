@@ -3,8 +3,10 @@ import re
 import tkinter as tk
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 import os
+from frame_dict import frame_dict
+from loss_factor_dict import loss_factor_dict
 
-open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\shell_perdido.PDF'
+open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\Bria_is_the_best.PDF'
 save_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_file.runM'
 
 # open_filepath = None
@@ -93,27 +95,27 @@ with pdfplumber.open(open_filepath) as pdf:
 
 # Here we are just creating a dictionary that will later be used to associate
 #  the frame model to it's correct product family
-product_family = {}
-product_family['JGN'] = r'JGN/JGQ'
-product_family['JGQ'] = r'JGN/JGQ'
-product_family['KB100'] = r'KB100'
-product_family['JGM'] = r'JGM/JGP'
-product_family['JGP'] = r'JGM/JGP'
-product_family['JG'] = r'JG/JGA'
-product_family['JGA'] = r'JG/JGA'
-product_family['JGR'] = r'JGR'
-product_family['KBK'] = r'KBK/KBT'
-product_family['KBT'] = r'KBK/KBT'
-product_family['KBE'] = r'KBE'
-product_family['JGJ'] = r'JGJ'
-product_family['JGT'] = r'JGT'
-product_family['JGC'] = r'JGC/JGD/JGF'
-product_family['JGD'] = r'JGC/JGD/JGF'
-product_family['JGF'] = r'JGC/JGD/JGF'
-product_family['KBU'] = r'KBU/KBZ'
-product_family['KBZ'] = r'KBU/KBZ'
-product_family['KBB'] = r'KBB/KBV'
-product_family['KBV'] = r'KBB/KBV'
+# product_family = {}
+# product_family['JGN'] = r'JGN/JGQ'
+# product_family['JGQ'] = r'JGN/JGQ'
+# product_family['KB100'] = r'KB100'
+# product_family['JGM'] = r'JGM/JGP'
+# product_family['JGP'] = r'JGM/JGP'
+# product_family['JG'] = r'JG/JGA'
+# product_family['JGA'] = r'JG/JGA'
+# product_family['JGR'] = r'JGR'
+# product_family['KBK'] = r'KBK/KBT'
+# product_family['KBT'] = r'KBK/KBT'
+# product_family['KBE'] = r'KBE'
+# product_family['JGJ'] = r'JGJ'
+# product_family['JGT'] = r'JGT'
+# product_family['JGC'] = r'JGC/JGD/JGF'
+# product_family['JGD'] = r'JGC/JGD/JGF'
+# product_family['JGF'] = r'JGC/JGD/JGF'
+# product_family['KBU'] = r'KBU/KBZ'
+# product_family['KBZ'] = r'KBU/KBZ'
+# product_family['KBB'] = r'KBB/KBV'
+# product_family['KBV'] = r'KBB/KBV'
 
 # units_dict = {}
 
@@ -359,6 +361,8 @@ def pressure_corrector(col_start, tot_cyl):
 #  string with each cylinder of that stage in the runM format.
 #  Need to talk with the guys about what loss_factor is and how to make this
 #  variable from the report.  currently hard coded as 0.00704
+product_family = frame_dict[output_dict['Frame'][-5:]]['product_family']
+
 def stage_assigner(service):
     output = ""
     for stage in range(int(stages[f'Service {service} Total Stages'])):
@@ -366,9 +370,9 @@ def stage_assigner(service):
                 	<number>{stage + 1}</number>
                 	<Cylinder>
                 		<total>{stages[f'Service {service} Stage {stage + 1}']}</total>
-                		<product_family>{product_family[output_dict['Frame'][-5:-2]]}</product_family>
+                		<product_family>{product_family}</product_family>
                 		<bore_size>{stages[f'Service {service} Stage {stage + 1} Cylinder'][1]}</bore_size>
-                		<loss_factor>0.00704</loss_factor>
+                		<loss_factor>{loss_factor_dict[product_family]  [f'bore_size {stages[f"Service {service} Stage {stage + 1} Cylinder"][1]}']  }</loss_factor>
                         <throws>{' '.join(stages[f'Service {service} Stage {int(stage + 1)} Throws'])}</throws>
                         <nominal>{stages[f'Service {service} Stage {stage + 1} Cylinder'][0]}</nominal>
                         <mawp>{stages[f'Service {service} Stage {stage + 1} Cylinder'][3]}</mawp>
@@ -454,7 +458,7 @@ output_txt = fr"""<?xml version="1.0" encoding=UTF-8 ?>
 	</User>
 	<Compressor>
 		<RPM>{output_dict['Calc RPM']}</RPM>
-		<product_family>{product_family[output_dict['Frame'][-5:-2]]}</product_family>
+		<product_family>{frame_dict[output_dict['Frame'][-5:]]['product_family']}</product_family>
 		<model>{output_dict['Frame'][-5:-2]}</model>
 		<num_throws>{output_dict['Frame'][-1]}</num_throws>
 	</Compressor>
