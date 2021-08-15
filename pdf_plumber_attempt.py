@@ -4,7 +4,7 @@ import tkinter as tk
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 import os
 
-open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_file.PDF'
+open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\shell_perdido.PDF'
 save_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_file.runM'
 
 # open_filepath = None
@@ -273,8 +273,15 @@ for index in range(len(cyls_list)):
     stages_list[index] = [stage for stage in cyls_list[index] if stage != '---']
 print(stages_list)
 
-stg_data = output_dict[f'Stage Data'].split()
-stg_data.remove('(SG)')
+stg_data = [stg for stg in output_dict[f'Stage Data'].split() if stg != '(SG)']
+
+
+def stg_data_checker(pos):
+    if stg_data[pos] == '---':
+        pos = pos - 1
+        return stg_data_checker(pos)
+    else:
+        return 'Stage ' + stg_data[pos]
 cylinders = []
 for index in range(len(output_dict['Cyl Model'].split())):
     cylinders.append([
@@ -284,6 +291,7 @@ for index in range(len(output_dict['Cyl Model'].split())):
     output_dict[f'Cyl MAWP, {pressure}'].split()[index],
     'Throw '+ output_dict[f'Cylinder Data'].split('Throw')[index + 1],
     ])
+    cylinders[index].append(stg_data_checker(index))
     # if stg_data[index] != '---':
     #     cylinders[index].append('Stage ' + stg_data[index])
     # else:
