@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding=UTF-8 ?>
+<Ariel_Mobile>
+    <Version>1.0</Version>
+    <Units>
+        <flow>MMSCFD</flow>
+        <power>hp</power>
+        <temperature>F</temperature>
+        <pressure>psi</pressure>
+        <unitType>English</unitType>
+        <pressType>Gauge</pressType>
+    </Units>
+    <User>
+		<name>NA</name>
+		<email>NA</email>
+		<telephone>NA</telephone>
+		<project>Targa Ethane</project>
+		<location>NA</location>
+		<country>NA</country>
+		<elevation>69.00</elevation>
+	</User>
+	<Compressor>
+		<RPM>890.0</RPM>
+		<product_family>KBU/KBZ</product_family>
+		<model>KBZ</model>
+		<num_throws>4</num_throws>
+	</Compressor>
+    <Services>
+	
+        <Service>
+            <target_flow>31.323</target_flow>
+            <target_bhp>1893</target_bhp>
+            <suction_pressure>398.8</suction_pressure>
+            <discharge_pressure>1081.8</discharge_pressure>
+            <suction_temp>559.67</suction_temp>
+            <gas_type>Field Gas</gas_type>
+            <specific_gravity>1.0470</specific_gravity>
+            <k>1.2421</k>
+            <Zs>0.7741</Zs>
+            <Zd>0.7262</Zd>
+            <total_stages>2</total_stages>
+            <Stages>
+                <Stage>
+                	<number>1</number>
+                	<Cylinder>
+                		<total>2</total>
+                		<product_family>KBU/KBZ</product_family>
+                		<bore_size>13.625</bore_size>
+                		<loss_factor>0.00704</loss_factor>
+                	</Cylinder>
+                </Stage>
+            <Stage>
+                	<number>2</number>
+                	<Cylinder>
+                		<total>2</total>
+                		<product_family>KBU/KBZ</product_family>
+                		<bore_size>9.750</bore_size>
+                		<loss_factor>0.00704</loss_factor>
+                	</Cylinder>
+                </Stage>
+            
+            </Stages>
+    </Service>
+    </Services>
+</Ariel_Mobile>

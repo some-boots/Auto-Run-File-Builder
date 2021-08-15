@@ -1,0 +1,101 @@
+[
+	{
+		"id": 1,
+		"name": "Hydrogen",
+		"specific_gravity": 0.07,
+		"k": 1.403,
+		"Zs": 1.00,
+		"Zd": 1.00,
+		"ratio_stage_cutoff": 2.1,
+		"requires_motor_hz": "true",
+		"requires_prc_frame": "true"
+	},
+	{
+		"id": 2,
+		"name": "PSA Tail Gas",
+		"specific_gravity": 0.34,
+		"k": 1.355,
+		"Zs": 0.99,
+		"Zd": 1.00,
+		"ratio_stage_cutoff": 2.1,
+		"requires_motor_hz": "true",
+		"requires_prc_frame": "true"
+	},
+	{
+		"id": 3,
+		"name": "Refinery Feed Gas",
+		"specific_gravity": 0.59,
+		"k": 1.355,
+		"Zs": 0.99,
+		"Zd": 0.99,
+		"ratio_stage_cutoff": 3.2,
+		"requires_motor_hz": "true",
+		"requires_prc_frame": "true"
+	},
+	{
+		"id": 4,
+		"name": "Pipeline",
+		"specific_gravity": 0.59,
+		"k": 1.270,
+		"Zs": 0.99,
+		"Zd": 0.99,
+		"ratio_stage_cutoff": 3.2,
+		"requires_motor_hz": "false",
+		"requires_prc_frame": "false"
+	},
+	{
+		"id": 5,
+		"name": "Field Gas",
+		"specific_gravity": 0.65,
+		"k": 1.251,
+		"Zs": 0.98,
+		"Zd": 0.98,
+		"ratio_stage_cutoff": 3.2,
+		"requires_motor_hz": "false",
+		"requires_prc_frame": "false"
+	},
+	{
+		"id": 6,
+		"name": "Air/N2",
+		"specific_gravity": 1.00,
+		"k": 1.400,
+		"Zs": 0.99,
+		"Zd": 1.00,
+		"ratio_stage_cutoff": 2.4,
+		"requires_motor_hz": "false",
+		"requires_prc_frame": "false"
+	},
+	{
+		"id": 7,
+		"name": "Sour Gas",
+		"specific_gravity": 1.40,
+		"k": 1.287,
+		"Zs": 0.98,
+		"Zd": 0.94,
+		"ratio_stage_cutoff": 2.4,
+		"requires_motor_hz": "false",
+		"requires_prc_frame": "false"
+	},
+	{
+		"id": 8,
+		"name": "Heavy Hydro-Carbons",
+		"specific_gravity": 1.50,
+		"k": 1.123,
+		"Zs": 0.98,
+		"Zd": 0.91,
+		"ratio_stage_cutoff": 2.8,
+		"requires_motor_hz": "false",
+		"requires_prc_frame": "false"
+	},
+	{
+		"id": 9,
+		"name": "CO2",
+		"specific_gravity": 1.50,
+		"k": 1.266,
+		"Zs": 0.99,
+		"Zd": 0.98,
+		"ratio_stage_cutoff": 2.8,
+		"requires_motor_hz": "false",
+		"requires_prc_frame": "false"
+	},
+]

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding=UTF-8 ?>
+<Ariel_Mobile>
+    <Version>1.0</Version>
+    <Units>
+        <flow>MMSCFD</flow>
+        <power>hp</power>
+        <temperature>F</temperature>
+        <pressure>psi</pressure>
+        <unitType>English</unitType>
+        <pressType>Gauge</pressType>
+    </Units>
+    <User>
+		<name>NA</name>
+		<email>NA</email>
+		<telephone>NA</telephone>
+		<project>Jay's Project</project>
+		<location>NA</location>
+		<country>NA</country>
+		<elevation>1250.00</elevation>
+	</User>
+	<Compressor>
+		<RPM>1400.0</RPM>
+		<product_family>KBK/KBT</product_family>
+		<model>KBT</model>
+		<num_throws>4</num_throws>
+	</Compressor>
+    <Services>
+	
+        <Service>
+            <target_flow>5.035</target_flow>
+            <target_bhp>986</target_bhp>
+            <suction_pressure>63.3</suction_pressure>
+            <discharge_pressure>1413.3</discharge_pressure>
+            <suction_temp>539.67</suction_temp>
+            <gas_type>Field Gas</gas_type>
+            <specific_gravity>0.6500</specific_gravity>
+            <k>1.2481</k>
+            <Zs>0.9874</Zs>
+            <Zd>0.9824</Zd>
+            <total_stages>3</total_stages>
+            <Stages>
+                <Stage>
+                	<number>1</number>
+                	<Cylinder>
+                		<total>2</total>
+                		<product_family>KBK/KBT</product_family>
+                		<bore_size>11.000</bore_size>
+                		<loss_factor>0.00704</loss_factor>
+                	</Cylinder>
+                </Stage>
+            <Stage>
+                	<number>2</number>
+                	<Cylinder>
+                		<total>1</total>
+                		<product_family>KBK/KBT</product_family>
+                		<bore_size>7.875</bore_size>
+                		<loss_factor>0.00704</loss_factor>
+                	</Cylinder>
+                </Stage>
+            <Stage>
+                	<number>3</number>
+                	<Cylinder>
+                		<total>1</total>
+                		<product_family>KBK/KBT</product_family>
+                		<bore_size>5.000</bore_size>
+                		<loss_factor>0.00704</loss_factor>
+                	</Cylinder>
+                </Stage>
+            
+            </Stages>
+    </Service>
+    </Services>
+</Ariel_Mobile>

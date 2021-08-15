@@ -1,0 +1,68 @@
+"Elevation,ft",1250.00
+"Barmtr,psia",14.035
+"Ambient,F",100.00
+Driver Type,Unselected
+Frame,(ELP) KBT/4
+Stroke,5.0
+Rod Dia,2.000
+Driver Mfg,none
+Max RL Tot,92000
+Max RL Tens,46000.0
+Max RL Comp,50000
+Driver Model,none
+Rated RPM,1500
+Rated BHP,3680.0
+Rated PS,1250.0
+BHP,0
+Calc RPM,1400.0
+Calc BHP,986.0
+Calc PS,1166.7
+Avail HP,0
+Services,['Service 1']
+Gas Model,['VMG-APRNGL2']
+Stage Data:,"['1(SG) ---', '2 3']"
+"Target Flow, MMSCFD","['5.000 ---', '5.000 5.000']"
+"Flow Calc, MMSCFD","['2.518', '2.518', '5.036', '5.005']"
+BHP per Stage,"['385.5 ---', '315.7 266.0']"
+Specific Gravity,"['0.6500', '---', '0.6498', '0.6467']"
+Ratio of Sp Ht (N),"['1.2481', '---', '1.2520', '1.2696']"
+Comp Suct (Zs),"['0.9874', '---', '0.9663', '0.9168']"
+Comp Disch (Zd),"['0.9824', '---', '0.9609', '0.9251']"
+"Pres Suct Line, psig","['50.00', '---', 'N/A', 'N/A']"
+"Pres Suct Flg, psig","['49.36', '---', '205.24', '563.07']"
+"Pres Disch Flg, psig","['210.24', '---', '573.07', '1414.14']"
+"Pres Disch Line, psig","['N/A', '---', 'N/A', '1400.00']"
+Pres Ratio F/F,"['3.538', '---', '2.677', '2.475']"
+"Temp Suct, F","['80.00', '---', '120.00', '120.00']"
+"Temp Clr Disch, F","['120.00', '---', '120.00', '120.00']"
+Cylinder Data:,"['Throw 1', 'Throw 3', 'Throw 4', 'Throw 2']"
+Cyl Model,"['11T:21', '11T:21', '8-3/8T:20', '5-3/8T:20']"
+"Cyl Bore, in","['11.000', '11.000', '7.875', '5.000']"
+"Cyl RDP (API), psig","['1154.5', '1154.5', '1722.7', '2286.4']"
+"Cyl MAWP, psig","['1270.0', '1270.0', '1895.0', '2515.0']"
+Cyl Action,"['DBL', 'DBL', 'DBL', 'DBL']"
+"Cyl Disp, CFM","['757.2', '757.2', '381.9', '146.4']"
+"Pres Suct Intl, psig","['45.07', '45.07', '191.49', '538.61']"
+"Temp Suct Intl, F","['88', '88', '125', '124']"
+"Pres Disch Intl, psig","['222.39', '222.39', '609.08', '1468.99']"
+"Temp Disch Intl, F","['261', '261', '272', '261']"
+"HE Suct Gas Vel, FPM","['8561', '8561', '8560', '7199']"
+"HE Disch Gas Vel, FPM","['7310', '7310', '7870', '6372']"
+HE Spcrs Used/Max,"['0/4', '0/4', '0/4', '0/2']"
+HE Vol Pkt Avail,"['0.83+47.77', '0.83+47.77', 'No Pkt', 'No Pkt']"
+Vol Pkt Used,"['0.00 (V) %', '0.00 (V) %', 'No Pkt', 'No Pkt']"
+"HE Min Clr, %","['20.32', '20.32', '21.59', '25.01']"
+"HE Total Clr, %","['21.14', '21.14', '21.59', '25.01']"
+"CE Suct Gas Vel, FPM","['8278', '8278', '8008', '6047']"
+"CE Disch Gas Vel, FPM","['7068', '7068', '7362', '5353']"
+CE Spcrs Used/Max,"['0/4', '0/4', '0/4', '0/2']"
+"CE Min Clr, %","['21.94', '21.94', '24.56', '37.39']"
+"CE Total Clr, %","['21.94', '21.94', '24.56', '37.39']"
+"Suct Vol Eff HE/CE, %","['55.6/54.2', '55.6/54.2.1', '68.0/64.2', '67.9/54.7']"
+"Disch Event HE/CE, ms","['6.0/6.8', '6.0/6.8', '7.5/8.5', '7.9/8.0']"
+Suct Pseudo-Q HE/CE,"['5.9/5.5', '5.9/5.5', '6.9/6.1', '4.7/3.3']"
+"Gas Rod Ld Comp, %","['34.0 C', '34.0 C', '42.0 C', '40.1 C']"
+"Gas Rod Ld Tens, %","['35.1 T', '35.1 T', '39.9 T', '29.5 T']"
+"Gas Rod Ld Total, %","['36.0', '36.0', '42.8', '36.6']"
+Xhd Pin Deg/%Rvrsl lbf,"['157/71.0', '157/71.0', '153/82.2', '145/84.2']"
+Cyl BHP,"['192.7', '192.7', '315.7', '266.0']"
