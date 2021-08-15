@@ -4,80 +4,83 @@ import tkinter as tk
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 import os
 
-open_filepath = None
-save_filepath = None
+open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_file.PDF'
+save_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_file.runM'
 
-def open_file():
-    global open_filepath
-    open_filepath = askopenfilename(filetypes=[('PDF', '*.pdf')])
-    open_var.set(open_filepath)
-    if not open_filepath:
-        return
+# open_filepath = None
+# save_filepath = None
 
-def save_file():
-    global save_filepath
-    save_filepath = asksaveasfilename(defaultextension='runM', filetypes=[("runM", "*.runM")])
-    save_var.set(save_filepath)
-    if not save_filepath:
-        return
-
-# This function defines a message box that displays the appropriate error message
-# when called with the error message and window title as arguments.
-# We use this to alert the user if their input is invalid
-def error_box(box_title, box_label):
-    error_window = tk.Tk()
-    error_window.title(box_title)
-    error_window.geometry("500x100")
-    error_lbl = tk.Label(master=error_window, text=box_label)
-    error_lbl.pack()
-    error_window.mainloop()
-
-# This function defines what happens when you click the Next button.  The variables
-# are all designated as global to allow the program to use these values outside of the
-# window.  Possible future upgrade would to use an object oriented approach here
-# rather than the global variables.
-def take_ent():
-    # this is where we check that the source and save file paths have been provided.
-
-    if open_filepath == None or open_filepath == "":
-        error_box("Enter All Fields", "Please select a source file.")
-
-    elif save_filepath == None or save_filepath == "":
-        error_box("Enter All Fields", "Please select a save location.")
-
-    else:
-        window.destroy()
-
-window = tk.Tk()
-window.title("Auto Run File Builder")
-window.geometry("900x600")
-
-#open source file location
-frm_1 = tk.Frame(master = window)
-frm_1.grid(row=0, column=0, padx=20, pady=(100,20), sticky='w')
-btn_open = tk.Button(master = frm_1, text = "Select source file", width=20, command=open_file)
-btn_open.grid(row=0, column=0)
-
-open_var = tk.StringVar()
-lbl_open = tk.Label(master=frm_1, textvariable=open_var, width=70, relief=tk.SUNKEN, borderwidth=2)
-lbl_open.grid(row=0, column=1, padx=20)
-
-#save result file location
-frm_2 = tk.Frame(master=window)
-frm_2.grid(row = 12, column = 0, padx = 20, pady = (50,50), sticky = 'w')
-btn_save = tk.Button(master = frm_2, text='Results save location', width=20, command=save_file)
-btn_save.grid(row=0, column=0)
-
-save_var = tk.StringVar()
-lbl_save = tk.Label(master=frm_2, textvariable=save_var, width=70, relief=tk.SUNKEN, borderwidth=2)
-lbl_save.grid(row=0, column=1, padx=20)
-
-# Next Button
-btn = tk.Button(master=window, text="Next", width = 15, height = 3, command = take_ent)
-btn.grid(row=15, column=1, sticky='se')
-
-
-window.mainloop()
+# def open_file():
+#     global open_filepath
+#     open_filepath = askopenfilename(filetypes=[('PDF', '*.pdf')])
+#     open_var.set(open_filepath)
+#     if not open_filepath:
+#         return
+#
+# def save_file():
+#     global save_filepath
+#     save_filepath = asksaveasfilename(defaultextension='runM', filetypes=[("runM", "*.runM")])
+#     save_var.set(save_filepath)
+#     if not save_filepath:
+#         return
+#
+# # This function defines a message box that displays the appropriate error message
+# # when called with the error message and window title as arguments.
+# # We use this to alert the user if their input is invalid
+# def error_box(box_title, box_label):
+#     error_window = tk.Tk()
+#     error_window.title(box_title)
+#     error_window.geometry("500x100")
+#     error_lbl = tk.Label(master=error_window, text=box_label)
+#     error_lbl.pack()
+#     error_window.mainloop()
+#
+# # This function defines what happens when you click the Next button.  The variables
+# # are all designated as global to allow the program to use these values outside of the
+# # window.  Possible future upgrade would to use an object oriented approach here
+# # rather than the global variables.
+# def take_ent():
+#     # this is where we check that the source and save file paths have been provided.
+#
+#     if open_filepath == None or open_filepath == "":
+#         error_box("Enter All Fields", "Please select a source file.")
+#
+#     elif save_filepath == None or save_filepath == "":
+#         error_box("Enter All Fields", "Please select a save location.")
+#
+#     else:
+#         window.destroy()
+#
+# window = tk.Tk()
+# window.title("Auto Run File Builder")
+# window.geometry("900x600")
+#
+# #open source file location
+# frm_1 = tk.Frame(master = window)
+# frm_1.grid(row=0, column=0, padx=20, pady=(100,20), sticky='w')
+# btn_open = tk.Button(master = frm_1, text = "Select source file", width=20, command=open_file)
+# btn_open.grid(row=0, column=0)
+#
+# open_var = tk.StringVar()
+# lbl_open = tk.Label(master=frm_1, textvariable=open_var, width=70, relief=tk.SUNKEN, borderwidth=2)
+# lbl_open.grid(row=0, column=1, padx=20)
+#
+# #save result file location
+# frm_2 = tk.Frame(master=window)
+# frm_2.grid(row = 12, column = 0, padx = 20, pady = (50,50), sticky = 'w')
+# btn_save = tk.Button(master = frm_2, text='Results save location', width=20, command=save_file)
+# btn_save.grid(row=0, column=0)
+#
+# save_var = tk.StringVar()
+# lbl_save = tk.Label(master=frm_2, textvariable=save_var, width=70, relief=tk.SUNKEN, borderwidth=2)
+# lbl_save.grid(row=0, column=1, padx=20)
+#
+# # Next Button
+# btn = tk.Button(master=window, text="Next", width = 15, height = 3, command = take_ent)
+# btn.grid(row=15, column=1, sticky='se')
+#
+#
+# window.mainloop()
 
 # # End of GUI portion
 # ######################################################################
@@ -254,9 +257,9 @@ output_dict[f'Cyl {power}'] = re.search(fr'Cyl {power}(.*)', text).group(1).stri
 #  and which cylinders those are (bore, nominal, mawp).  In this section we
 #  mine out this information and add it ot the stages dict.
 services_lst = [service for service in output_dict['Services'].split() if service.isdigit()]
-print(services_lst)
+# print(services_lst)
 num_services = services_lst[-1]
-print(num_services)
+# print(num_services)
 #############################
 #############################
 # This is the problem.  The split on 1 drops the last service b/c its a single stage
@@ -269,6 +272,9 @@ stages_list = {}
 for index in range(len(cyls_list)):
     stages_list[index] = [stage for stage in cyls_list[index] if stage != '---']
 print(stages_list)
+
+stg_data = output_dict[f'Stage Data'].split()
+stg_data.remove('(SG)')
 cylinders = []
 for index in range(len(output_dict['Cyl Model'].split())):
     cylinders.append([
@@ -276,7 +282,15 @@ for index in range(len(output_dict['Cyl Model'].split())):
     output_dict['Cyl Bore, in'].split()[index],
     output_dict[f'Cyl RDP (API), {pressure}'].split()[index],
     output_dict[f'Cyl MAWP, {pressure}'].split()[index],
+    'Throw '+ output_dict[f'Cylinder Data'].split('Throw')[index + 1],
     ])
+    if stg_data[index] != '---':
+        cylinders[index].append('Stage ' + stg_data[index])
+    else:
+        cylinders[index].append('Stage ' + stg_data[index - 1])
+
+    print(cylinders[index])
+# print(stg_data)
 
 stages = {}
 stages[f'Total Services'] = num_services
