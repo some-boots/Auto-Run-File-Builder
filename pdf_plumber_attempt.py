@@ -6,7 +6,7 @@ import os
 from frame_dict import frame_dict
 from loss_factor_dict import loss_factor_dict
 
-open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\Bria_is_the_best.PDF'
+open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_3.PDF'
 save_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_file.runM'
 
 # open_filepath = None
@@ -93,6 +93,8 @@ with pdfplumber.open(open_filepath) as pdf:
     first_page = pdf.pages[0]
     text = first_page.extract_text()
 
+# print(text)
+
 # Here we are just creating a dictionary that will later be used to associate
 #  the frame model to it's correct product family
 # product_family = {}
@@ -174,10 +176,10 @@ output_dict['Driver Type'] = re.search(r'Type:(.*)', text).group(1).strip()
 
 output_dict['Frame'] = re.search(r'Frame:(.*?)Stroke', text).group(1).strip()
 output_dict['Stroke'] = re.search(r'Stroke, in:(.*?)Rod', text).group(1).strip()
-
-# Rod Dia and Model require a bit of logic since they are the only two values that
-#  can be left blank.  When blank, we manually input the 'none' string as the value
 output_dict['Rod Dia'] = re.search(r'Dia, in:(.*?)Mfg', text).group(1).strip()
+
+# driver MFG and Model require a bit of logic since they are the only two values that
+#  can be left blank.  When blank, we manually input the 'none' string as the value
 if re.search(r'Mfg:(.*)', text).group(1):
     output_dict['Driver Mfg'] = re.search(r'Mfg:(.*)', text).group(1)
 else:
@@ -196,10 +198,23 @@ output_dict[f'Rated {power}'] = re.search(fr'Rated {power}:(.*?)Rated PS', text)
 output_dict['Rated PS'] = re.search(fr'Rated PS FPM:(.*?){power}', text).group(1).strip()
 output_dict[f'{power}'] = re.search(fr'\d {power}:(.*)', text).group(1).strip()
 
+
 output_dict['Calc RPM'] = re.search(fr'Calc RPM:(.*?){power}:', text).group(1).strip()
 output_dict[f'Calc {power}'] = re.search(fr'{power}:(.*?)Calc PS', text).group(1).strip()
 output_dict['Calc PS'] = re.search(r'Calc PS FPM:(.*?)Avail', text).group(1).strip()
 output_dict['Avail HP'] = re.search(r'Avail:(.*)', text).group(1).strip()
+###############################################
+###############################################
+if len(output_dict[f'{power}'].split()) > 1:
+    driver_rated_BHP = int(float(output_dict[f'{power}'].split()[0]) / (1 - float(output_dict[f'{power}'].split()[1].replace("(", "").replace(")", "").replace("%", ""))/100))
+    driver_derate = output_dict[f'{power}'].split()[1].replace("(", "").replace(")", "")
+    driver_aux = output_dict['Avail HP'].split()[1].replace("(", "").replace(")", "")
+else:
+    driver_rated_BHP = output_dict[f'{power}']
+    driver_derate = "0"
+    driver_aux = "0"
+###############################################
+###############################################
 
 output_dict['Services'] = re.search(r'Services(.*)', text).group(1).strip()
 output_dict['Gas Model'] = re.search(r'Gas Model(.*)', text).group(1).strip()
@@ -438,6 +453,7 @@ def service_assigner():
 
 output_txt = fr"""<?xml version="1.0" encoding=UTF-8 ?>
 <Ariel_Mobile>
+    <Type>PDF</Type>
     <Version>1.0</Version>
     <Units>
         <flow>{flow}</flow>
@@ -461,6 +477,16 @@ output_txt = fr"""<?xml version="1.0" encoding=UTF-8 ?>
 		<product_family>{frame_dict[output_dict['Frame'][-5:]]['product_family']}</product_family>
 		<model>{output_dict['Frame'][-5:-2]}</model>
 		<num_throws>{output_dict['Frame'][-1]}</num_throws>
+        <Driver>
+            <type>{output_dict['Driver Type'].strip()}</type>
+            <mfg>{output_dict['Driver Mfg'].strip()}</mfg>
+            <model>{output_dict['Driver Model'].strip()}</model>
+            <config></config>
+            <ratedRPM></ratedRPM>
+            <ratedBHP>{driver_rated_BHP}</ratedBHP>
+            <derate>{driver_derate}</derate>
+            <aux>{driver_aux}</aux>
+        </Driver>
 	</Compressor>
     <Services>
 	{service_assigner()}
@@ -485,7 +511,7 @@ print(output_txt)
 #  pound or two)
 
 
-with open(save_filepath, mode='w', encoding='utf-8') as file:
-    file.writelines(output_txt)
-
-os.startfile(save_filepath)
+# with open(save_filepath, mode='w', encoding='utf-8') as file:
+#     file.writelines(output_txt)
+#
+# os.startfile(save_filepath)
