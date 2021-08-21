@@ -299,6 +299,15 @@ def stg_data_checker(pos):
         return stg_data_checker(pos)
     else:
         return 'Stage ' + stg_data[pos]
+
+pkt_used = re.split(r"(%|turns|in|Pos, in|No Pkt)", output_dict['Vol Pkt Used'])
+for index in range(len(pkt_used)):
+    for delim in ["%", "turns", "in", "Pos, in"]:
+        if pkt_used[index] == delim:
+            pkt_used[index-1] += delim
+pkt_used = [item.strip() for item in pkt_used if item.strip() and item not in ["%", "turns", "in", "Pos, in"]]
+
+
 cylinders = []
 for index in range(len(output_dict['Cyl Model'].split())):
     cylinders.append([
@@ -309,9 +318,14 @@ for index in range(len(output_dict['Cyl Model'].split())):
     'Throw'+ output_dict[f'Cylinder Data'].split('Throw')[index + 1],
     ])
     cylinders[index].append(stg_data_checker(index))
+    cylinders[index].append(output_dict['Cyl Action'].split()[index])
+    cylinders[index].append(output_dict['HE Spcrs Used/Max'].split()[index][0])
+    cylinders[index].append(output_dict['CE Spcrs Used/Max'].split()[index][0])
+    cylinders[index].append(output_dict['HE Vol Pkt Avail'].replace('No Pkt', 'No_Pkt').split()[index])
+    cylinders[index].append(pkt_used[index])
 
-# for cyl in cylinders:
-#     print(cyl)
+for cyl in cylinders:
+    print(cyl)
 
 stages = {}
 stages[f'Total Services'] = num_services
@@ -333,6 +347,8 @@ for service in range(int(num_services)):
     for stage in range(int(stages[f'Service {service + 1} Total Stages'])):
         stages[f'Service {service + 1} Stage {int(stage + 1)} Cylinder'] = cylinders[column_location]
         stages[f'Service {service + 1} Stage {int(stage + 1)} Column Start'] = column_location
+        stages[f'Service {service +1} Stage {int(stage + 1)} Suction Temp'] = output_dict[f'Temp Suct, {temperature}'].split()[column_location]
+        stages[f'Service {service +1} Stage {int(stage + 1)} Cooler Temp'] = output_dict[f'Temp Clr Disch, {temperature}'].split()[column_location]
         temp_loc = column_location
         column_location += stages[f'Service {service + 1} Stage {int(stage + 1)}']
         throws=[cylinders[temp_loc][4].strip()]
@@ -342,8 +358,8 @@ for service in range(int(num_services)):
             temp_loc += 1
         stages[f'Service {service + 1} Stage {int(stage + 1)} Throws'] = throws
 
-# for stage in stages.items():
-#     print(stage)
+for stage in stages.items():
+    print(stage)
 
 # In this section we define a few functions that either manipulate our data
 #  into the format the runM requires (pressure in absolute, temp in R) or
@@ -383,6 +399,7 @@ def stage_assigner(service):
     for stage in range(int(stages[f'Service {service} Total Stages'])):
         output = output + (f"""<Stage>
                 	<number>{stage + 1}</number>
+                    <coolerTemp>{stages[f'Service {service} Stage {stage + 1} Cooler Temp']}</coolerTemp>
                 	<Cylinder>
                 		<total>{stages[f'Service {service} Stage {stage + 1}']}</total>
                 		<product_family>{product_family}</product_family>
