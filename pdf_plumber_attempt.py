@@ -6,7 +6,7 @@ import os
 from frame_dict import frame_dict
 from loss_factor_dict import loss_factor_dict
 
-open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_3.PDF'
+open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_file_two.PDF'
 save_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_file.runM'
 
 # open_filepath = None
@@ -309,13 +309,14 @@ pkt_used = [item.strip() for item in pkt_used if item.strip() and item not in ["
 
 
 cylinders = []
+# 0-model, 1-bore, 2-rdp, 3-mawp, 4-throw, 5-stage, 6-action, 7-he spcrs, 8-ce spcrs, 9-pkt avail, 10-pkt used
 for index in range(len(output_dict['Cyl Model'].split())):
     cylinders.append([
     output_dict['Cyl Model'].split()[index],
     output_dict['Cyl Bore, in'].split()[index],
     output_dict[f'Cyl RDP (API), {pressure}'].split()[index],
     output_dict[f'Cyl MAWP, {pressure}'].split()[index],
-    'Throw'+ output_dict[f'Cylinder Data'].split('Throw')[index + 1],
+    output_dict[f'Cylinder Data'].split('Throw')[index + 1],
     ])
     cylinders[index].append(stg_data_checker(index))
     cylinders[index].append(output_dict['Cyl Action'].split()[index])
@@ -324,8 +325,8 @@ for index in range(len(output_dict['Cyl Model'].split())):
     cylinders[index].append(output_dict['HE Vol Pkt Avail'].replace('No Pkt', 'No_Pkt').split()[index])
     cylinders[index].append(pkt_used[index])
 
-for cyl in cylinders:
-    print(cyl)
+# for cyl in cylinders:
+#     print(cyl)
 
 stages = {}
 stages[f'Total Services'] = num_services
@@ -352,14 +353,29 @@ for service in range(int(num_services)):
         temp_loc = column_location
         column_location += stages[f'Service {service + 1} Stage {int(stage + 1)}']
         throws=[cylinders[temp_loc][4].strip()]
+        action=[cylinders[temp_loc][6]]
+        ce_spacers = [cylinders[temp_loc][8]]
+        he_spacers = [cylinders[temp_loc][7]]
+        he_pocket = [cylinders[temp_loc][9]]
+        he_pocket_used = [cylinders[temp_loc][10]]
         temp_loc += 1
         while temp_loc < column_location:
             throws.append(cylinders[temp_loc][4].strip())
+            action.append(cylinders[temp_loc][6])
+            ce_spacers.append(cylinders[temp_loc][8])
+            he_spacers.append(cylinders[temp_loc][7])
+            he_pocket.append(cylinders[temp_loc][9])
+            he_pocket_used.append(cylinders[temp_loc][10])
             temp_loc += 1
         stages[f'Service {service + 1} Stage {int(stage + 1)} Throws'] = throws
+        stages[f'Service {service + 1} Stage {int(stage + 1)} Action'] = action
+        stages[f'Service {service + 1} Stage {int(stage + 1)} CE Spacers'] = ce_spacers
+        stages[f'Service {service + 1} Stage {int(stage + 1)} HE Spacers'] = he_spacers
+        stages[f'Service {service + 1} Stage {int(stage + 1)} HE Pocket'] = he_pocket
+        stages[f'Service {service + 1} Stage {int(stage + 1)} HE Pocket Used'] = he_pocket_used
 
-for stage in stages.items():
-    print(stage)
+# for stage in stages.items():
+#     print(stage)
 
 # In this section we define a few functions that either manipulate our data
 #  into the format the runM requires (pressure in absolute, temp in R) or
@@ -402,12 +418,19 @@ def stage_assigner(service):
                     <coolerTemp>{stages[f'Service {service} Stage {stage + 1} Cooler Temp']}</coolerTemp>
                 	<Cylinder>
                 		<total>{stages[f'Service {service} Stage {stage + 1}']}</total>
-                		<product_family>{product_family}</product_family>
-                		<bore_size>{stages[f'Service {service} Stage {stage + 1} Cylinder'][1]}</bore_size>
-                		<loss_factor>{loss_factor_dict[product_family]  [f'bore_size {stages[f"Service {service} Stage {stage + 1} Cylinder"][1]}']  }</loss_factor>
-                        <throws>{' '.join(stages[f'Service {service} Stage {int(stage + 1)} Throws'])}</throws>
-                        <nominal>{stages[f'Service {service} Stage {stage + 1} Cylinder'][0]}</nominal>
+                        <throws>{', '.join(stages[f'Service {service} Stage {int(stage + 1)} Throws'])}</throws>
+                        <model>{stages[f'Service {service} Stage {stage + 1} Cylinder'][0]}</model>
                         <mawp>{stages[f'Service {service} Stage {stage + 1} Cylinder'][3]}</mawp>
+                        <bore_size>{stages[f'Service {service} Stage {stage + 1} Cylinder'][1]}</bore_size>
+                        <action>{', '.join(stages[f'Service {service} Stage {int(stage + 1)} Action'])}</action>
+                        <CESpacers>{', '.join(stages[f'Service {service} Stage {int(stage + 1)} CE Spacers'])}</CESpacers>
+                        <HESpacers>{', '.join(stages[f'Service {service} Stage {int(stage + 1)} HE Spacers'])}</HESpacers>
+                        <HEPocket>{', '.join(stages[f'Service {service} Stage {int(stage + 1)} HE Pocket'])}</HEPocket>
+                        <HEPocketUsed>{', '.join(stages[f'Service {service} Stage {int(stage + 1)} HE Pocket Used'])}</HEPocketUsed>
+                        <loss_factor>{loss_factor_dict[product_family]  [f'bore_size {stages[f"Service {service} Stage {stage + 1} Cylinder"][1]}']  }</loss_factor>
+                        <product_family>{product_family}</product_family>
+
+
                 	</Cylinder>
                 </Stage>
             """)
