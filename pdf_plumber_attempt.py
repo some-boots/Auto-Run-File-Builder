@@ -6,7 +6,7 @@ import os
 from frame_dict import frame_dict
 from loss_factor_dict import loss_factor_dict
 
-open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\Bria_is_the_best.PDF'
+open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_tandem.PDF'
 save_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_file.runM'
 
 # open_filepath = None
@@ -93,6 +93,8 @@ with pdfplumber.open(open_filepath) as pdf:
     first_page = pdf.pages[0]
     text = first_page.extract_text()
 
+# print(text)
+
 # Here we are just creating a dictionary that will later be used to associate
 #  the frame model to it's correct product family
 # product_family = {}
@@ -129,13 +131,21 @@ flow = re.search(r'Target Flow, (\D+) \d+', text).group(1).strip()
 power = re.search(f'Rated RPM: \d+ Rated (\D+): \d+', text).group(1).strip()
 power_for_output = power[-2:].lower()
 temperature = re.search(r'Ambient,(.*?):', text).group(1).strip()
-pressure = re.search(r'Cyl MAWP, (.*?) \d+', text).group(1).strip()
+pressure = re.search(r'Pres Suct Line, (.*?)\d', text).group(1).strip()
 if re.search(r'Max RL Tot, (.*?):', text).group(1).strip() == 'lbf':
     eng_met = 'English'
     length = 'ft'
+    small_length = 'in'
+    force = 'lbf'
+    piston_speed = 'FPM'
+    displacement = 'CFM'
 else:
     eng_met = 'Metric'
     length = 'm'
+    small_length = 'mm'
+    force = 'kN'
+    piston_speed = 'm/s'
+    displacement = 'm3/h'
 
 # Here we are looking at the pressure units to determine if the pressure is in
 #  gauge or absolute.  Then, if the pressure units are atm, we leave them as is
@@ -168,24 +178,24 @@ output_dict['Project'] = re.search(r'Project:(.*)', text).group(1).strip()
 
 
 output_dict[f'Elevation']=re.search(fr'Elevation,{length}:(.*?)Barmtr', text).group(1).strip()
-output_dict['Barmtr,psia'] = re.search(r'Barmtr,psia:(.*?)Ambient', text).group(1).strip()
-output_dict['Ambient,F'] = re.search(r'Ambient,F:(.*?)Type', text).group(1).strip()
+output_dict[f'Barmtr,{pressure[:1]+"a"}'] = re.search(fr'Barmtr,{pressure[:-1]+"a"}:(.*?)Ambient', text).group(1).strip()
+output_dict[f'Ambient,{temperature}'] = re.search(fr'Ambient,{temperature}:(.*?)Type', text).group(1).strip()
 output_dict['Driver Type'] = re.search(r'Type:(.*)', text).group(1).strip()
 
 output_dict['Frame'] = re.search(r'Frame:(.*?)Stroke', text).group(1).strip()
-output_dict['Stroke'] = re.search(r'Stroke, in:(.*?)Rod', text).group(1).strip()
+output_dict['Stroke'] = re.search(fr'Stroke, {small_length}:(.*?)Rod', text).group(1).strip()
+output_dict['Rod Dia'] = re.search(fr'Dia, {small_length}:(.*?)Mfg', text).group(1).strip()
 
-# Rod Dia and Model require a bit of logic since they are the only two values that
+# driver MFG and Model require a bit of logic since they are the only two values that
 #  can be left blank.  When blank, we manually input the 'none' string as the value
-output_dict['Rod Dia'] = re.search(r'Dia, in:(.*?)Mfg', text).group(1).strip()
 if re.search(r'Mfg:(.*)', text).group(1):
     output_dict['Driver Mfg'] = re.search(r'Mfg:(.*)', text).group(1)
 else:
     output_dict['Driver Mfg'] = "none"
 
-output_dict['Max RL Tot'] = re.search(r'Max RL Tot, lbf:(.*?)Max RL Tens', text).group(1).strip()
-output_dict['Max RL Tens'] = re.search(r'Max RL Tens, lbf:(.*?)Max RL Comp', text).group(1).strip()
-output_dict['Max RL Comp'] = re.search(r'Max RL Comp, lbf:(.*?)Model', text).group(1).strip()
+output_dict['Max RL Tot'] = re.search(fr'Max RL Tot, {force}:(.*?)Max RL Tens', text).group(1).strip()
+output_dict['Max RL Tens'] = re.search(fr'Max RL Tens, {force}:(.*?)Max RL Comp', text).group(1).strip()
+output_dict['Max RL Comp'] = re.search(fr'Max RL Comp, {force}:(.*?)Model', text).group(1).strip()
 if re.search(r'Model:(.*)', text).group(1):
     output_dict['Driver Model'] = re.search(r'Model:(.*)', text).group(1)
 else:
@@ -193,13 +203,26 @@ else:
 
 output_dict['Rated RPM'] = re.search(fr'Rated RPM:(.*?)Rated {power}', text).group(1).strip()
 output_dict[f'Rated {power}'] = re.search(fr'Rated {power}:(.*?)Rated PS', text).group(1).strip()
-output_dict['Rated PS'] = re.search(fr'Rated PS FPM:(.*?){power}', text).group(1).strip()
+output_dict['Rated PS'] = re.search(fr'Rated PS {piston_speed}:(.*?){power}', text).group(1).strip()
 output_dict[f'{power}'] = re.search(fr'\d {power}:(.*)', text).group(1).strip()
+
 
 output_dict['Calc RPM'] = re.search(fr'Calc RPM:(.*?){power}:', text).group(1).strip()
 output_dict[f'Calc {power}'] = re.search(fr'{power}:(.*?)Calc PS', text).group(1).strip()
-output_dict['Calc PS'] = re.search(r'Calc PS FPM:(.*?)Avail', text).group(1).strip()
+output_dict['Calc PS'] = re.search(fr'Calc PS {piston_speed}:(.*?)Avail', text).group(1).strip()
 output_dict['Avail HP'] = re.search(r'Avail:(.*)', text).group(1).strip()
+###############################################
+###############################################
+if len(output_dict[f'{power}'].split()) > 1:
+    driver_rated_BHP = int(float(output_dict[f'{power}'].split()[0]) / (1 - float(output_dict[f'{power}'].split()[1].replace("(", "").replace(")", "").replace("%", ""))/100))
+    driver_derate = output_dict[f'{power}'].split()[1].replace("(", "").replace(")", "")
+    driver_aux = output_dict['Avail HP'].split()[1].replace("(", "").replace(")", "")
+else:
+    driver_rated_BHP = output_dict[f'{power}']
+    driver_derate = "0"
+    driver_aux = "0"
+###############################################
+###############################################
 
 output_dict['Services'] = re.search(r'Services(.*)', text).group(1).strip()
 output_dict['Gas Model'] = re.search(r'Gas Model(.*)', text).group(1).strip()
@@ -220,24 +243,24 @@ output_dict[f'Temp Suct, {temperature}'] = re.search(fr'Temp Suct, {temperature}
 output_dict[f'Temp Clr Disch, {temperature}'] = re.search(fr'Temp Clr Disch, {temperature}(.*)', text).group(1).strip()
 output_dict['Cylinder Data'] = re.search(r'Cylinder Data:(.*)', text).group(1).strip()
 output_dict['Cyl Model'] = re.search(r'Cyl Model(.*)', text).group(1).strip()
-output_dict['Cyl Bore, in'] = re.search(r'Cyl Bore, in(.*)', text).group(1).strip()
-output_dict[f'Cyl RDP (API), {pressure}'] = re.search(fr'Cyl RDP \(API\), {pressure}(.*)', text).group(1).strip()
-output_dict[f'Cyl MAWP, {pressure}'] = re.search(fr'Cyl MAWP, {pressure}(.*)', text).group(1).strip()
+output_dict[f'Cyl Bore, {small_length}'] = re.search(fr'Cyl Bore, {small_length}(.*)', text).group(1).strip()
+output_dict[f'Cyl RDP (API), {pressure[:-1]+"g"}'] = re.search(fr'Cyl RDP \(API\), {pressure[:-1]+"g"}(.*)', text).group(1).strip()
+output_dict[f'Cyl MAWP, {pressure[:-1]+"g"}'] = re.search(fr'Cyl MAWP, {pressure[:-1]+"g"}(.*)', text).group(1).strip()
 output_dict['Cyl Action'] = re.search(r'Cyl Action(.*)', text).group(1).strip()
-output_dict['Cyl Disp, CFM'] = re.search(r'Cyl Disp, CFM(.*)', text).group(1).strip()
+output_dict[f'Cyl Disp, {displacement}'] = re.search(fr'Cyl Disp, {displacement}(.*)', text).group(1).strip()
 output_dict[f'Pres Suct Intl, {pressure}'] = re.search(fr'Pres Suct Intl, {pressure}(.*)', text).group(1).strip()
-output_dict['Temp Suct Intl, F'] = re.search(r'Temp Suct Intl, F(.*)', text).group(1).strip()
+output_dict[f'Temp Suct Intl, {temperature}'] = re.search(fr'Temp Suct Intl, {temperature}(.*)', text).group(1).strip()
 output_dict[f'Pres Disch Intl, {pressure}'] = re.search(fr'Pres Disch Intl, {pressure}(.*)', text).group(1).strip()
 output_dict[f'Temp Disch Intl, {temperature}'] = re.search(fr'Temp Disch Intl, {temperature}(.*)', text).group(1).strip()
-output_dict['HE Suct Gas Vel, FPM'] = re.search(r'HE Suct Gas Vel, FPM(.*)', text).group(1).strip()
-output_dict['HE Disch Gas Vel, FPM'] = re.search(r'HE Disch Gas Vel, FPM(.*)', text).group(1).strip()
+output_dict[f'HE Suct Gas Vel, {piston_speed}'] = re.search(fr'HE Suct Gas Vel, {piston_speed}(.*)', text).group(1).strip()
+output_dict[f'HE Disch Gas Vel, {piston_speed}'] = re.search(fr'HE Disch Gas Vel, {piston_speed}(.*)', text).group(1).strip()
 output_dict['HE Spcrs Used/Max'] = re.search(r'HE Spcrs Used/Max(.*)', text).group(1).strip()
 output_dict['HE Vol Pkt Avail'] = re.search(r'HE Vol Pkt Avail(.*)', text).group(1).strip()
 output_dict['Vol Pkt Used'] = re.search(r'Vol Pkt Used(.*)', text).group(1).strip()
 output_dict['HE Min Clr, %'] = re.search(r'HE Min Clr, %(.*)', text).group(1).strip()
 output_dict['HE Total Clr, %'] = re.search(r'HE Total Clr, %(.*)', text).group(1).strip()
-output_dict['CE Suct Gas Vel, FPM'] = re.search(r'CE Suct Gas Vel, FPM(.*)', text).group(1).strip()
-output_dict['CE Disch Gas Vel, FPM'] = re.search(r'CE Disch Gas Vel, FPM(.*)', text).group(1).strip()
+output_dict[f'CE Suct Gas Vel, {piston_speed}'] = re.search(fr'CE Suct Gas Vel, {piston_speed}(.*)', text).group(1).strip()
+output_dict[f'CE Disch Gas Vel, {piston_speed}'] = re.search(fr'CE Disch Gas Vel, {piston_speed}(.*)', text).group(1).strip()
 output_dict['CE Spcrs Used/Max'] = re.search(r'CE Spcrs Used/Max(.*)', text).group(1).strip()
 output_dict['CE Min Clr, %'] = re.search(r'CE Min Clr, %(.*)', text).group(1).strip()
 output_dict['CE Total Clr, %'] = re.search(r'CE Total Clr, %(.*)', text).group(1).strip()
@@ -247,7 +270,7 @@ output_dict['Suct Pseudo-Q HE/CE'] = re.search(r'Suct Pseudo-Q HE/CE(.*)', text)
 output_dict['Gas Rod Ld Comp, %'] = re.search(r'Gas Rod Ld Comp, %(.*)', text).group(1).strip()
 output_dict['Gas Rod Ld Tens, %'] = re.search(r'Gas Rod Ld Tens, %(.*)', text).group(1).strip()
 output_dict['Gas Rod Ld Total, %'] = re.search(r'Gas Rod Ld Total, %(.*)', text).group(1).strip()
-output_dict['Xhd Pin Deg/%Rvrsl lbf'] = re.search(r'Xhd Pin Deg/%Rvrsl lbf(.*)', text).group(1).strip()
+output_dict[f'Xhd Pin Deg/%Rvrsl {force}'] = re.search(fr'Xhd Pin Deg/%Rvrsl {force}(.*)', text).group(1).strip()
 # output_dict['Flow Calc, MMSCFD'] = re.search(r'Flow Calc, MMSCFD(.*)', text).group(1).strip()
 output_dict[f'Cyl {power}'] = re.search(fr'Cyl {power}(.*)', text).group(1).strip()
 
@@ -284,16 +307,40 @@ def stg_data_checker(pos):
         return stg_data_checker(pos)
     else:
         return 'Stage ' + stg_data[pos]
+
+
+if eng_met == 'English':
+    pkt_used = re.split(r"(%|turns|in|Pos, in|No Pkt)", output_dict['Vol Pkt Used'])
+    for index in range(len(pkt_used)):
+        for delim in ["%", "turns", "in", "Pos, in"]:
+            if pkt_used[index] == delim:
+                pkt_used[index-1] += delim
+    pkt_used = [item.strip() for item in pkt_used if item.strip() and item not in ["%", "turns", "in", "Pos, in"]]
+else:
+    pkt_used = re.split(r"(%|turns|mm|Pos, cm|No Pkt)", output_dict['Vol Pkt Used'])
+    for index in range(len(pkt_used)):
+        for delim in ["%", "turns", "mm", "Pos, cm"]:
+            if pkt_used[index] == delim:
+                pkt_used[index-1] += delim
+    pkt_used = [item.strip() for item in pkt_used if item.strip() and item not in ["%", "turns", "mm", "Pos, cm"]]
+
+
 cylinders = []
+# 0-model, 1-bore, 2-rdp, 3-mawp, 4-throw, 5-stage, 6-action, 7-he spcrs, 8-ce spcrs, 9-pkt avail, 10-pkt used
 for index in range(len(output_dict['Cyl Model'].split())):
     cylinders.append([
     output_dict['Cyl Model'].split()[index],
-    output_dict['Cyl Bore, in'].split()[index],
-    output_dict[f'Cyl RDP (API), {pressure}'].split()[index],
-    output_dict[f'Cyl MAWP, {pressure}'].split()[index],
-    'Throw'+ output_dict[f'Cylinder Data'].split('Throw')[index + 1],
+    output_dict[f'Cyl Bore, {small_length}'].split()[index],
+    output_dict[f'Cyl RDP (API), {pressure[:-1]+"g"}'].split()[index],
+    output_dict[f'Cyl MAWP, {pressure[:-1]+"g"}'].split()[index],
+    output_dict[f'Cylinder Data'].split('Throw')[index + 1],
     ])
     cylinders[index].append(stg_data_checker(index))
+    cylinders[index].append(output_dict['Cyl Action'].split()[index])
+    cylinders[index].append(output_dict['HE Spcrs Used/Max'].split()[index][0])
+    cylinders[index].append(output_dict['CE Spcrs Used/Max'].split()[index][0])
+    cylinders[index].append(output_dict['HE Vol Pkt Avail'].replace('No Pkt', 'No_Pkt').split()[index].replace('No_Pkt', 'No Pkt'))
+    cylinders[index].append(pkt_used[index])
 
 # for cyl in cylinders:
 #     print(cyl)
@@ -318,14 +365,31 @@ for service in range(int(num_services)):
     for stage in range(int(stages[f'Service {service + 1} Total Stages'])):
         stages[f'Service {service + 1} Stage {int(stage + 1)} Cylinder'] = cylinders[column_location]
         stages[f'Service {service + 1} Stage {int(stage + 1)} Column Start'] = column_location
+        stages[f'Service {service +1} Stage {int(stage + 1)} Suction Temp'] = output_dict[f'Temp Suct, {temperature}'].split()[column_location]
+        stages[f'Service {service +1} Stage {int(stage + 1)} Cooler Temp'] = output_dict[f'Temp Clr Disch, {temperature}'].split()[column_location]
         temp_loc = column_location
         column_location += stages[f'Service {service + 1} Stage {int(stage + 1)}']
         throws=[cylinders[temp_loc][4].strip()]
+        action=[cylinders[temp_loc][6]]
+        ce_spacers = [cylinders[temp_loc][8]]
+        he_spacers = [cylinders[temp_loc][7]]
+        he_pocket = [cylinders[temp_loc][9]]
+        he_pocket_used = [cylinders[temp_loc][10]]
         temp_loc += 1
         while temp_loc < column_location:
             throws.append(cylinders[temp_loc][4].strip())
+            action.append(cylinders[temp_loc][6])
+            ce_spacers.append(cylinders[temp_loc][8])
+            he_spacers.append(cylinders[temp_loc][7])
+            he_pocket.append(cylinders[temp_loc][9])
+            he_pocket_used.append(cylinders[temp_loc][10])
             temp_loc += 1
         stages[f'Service {service + 1} Stage {int(stage + 1)} Throws'] = throws
+        stages[f'Service {service + 1} Stage {int(stage + 1)} Action'] = action
+        stages[f'Service {service + 1} Stage {int(stage + 1)} CE Spacers'] = ce_spacers
+        stages[f'Service {service + 1} Stage {int(stage + 1)} HE Spacers'] = he_spacers
+        stages[f'Service {service + 1} Stage {int(stage + 1)} HE Pocket'] = he_pocket
+        stages[f'Service {service + 1} Stage {int(stage + 1)} HE Pocket Used'] = he_pocket_used
 
 # for stage in stages.items():
 #     print(stage)
@@ -348,14 +412,15 @@ for service in range(int(num_services)):
 def pressure_corrector(col_start, tot_cyl):
     ps_pd = ["", ""]
     if g_or_abs == 'Gauge':
-        ps_pd[0] = float(output_dict[f'Pres Suct Line, {pressure}'].split()[col_start]) + 13.3
+        ps_pd[0] = float(output_dict[f'Pres Suct Line, {pressure}'].split()[col_start]) + float(output_dict[f'Barmtr,{pressure[:1]+"a"}'])
         pd_lst = [pd for pd in output_dict[f'Pres Disch Line, {pressure}'].split()[:col_start+tot_cyl] if pd != '---' and pd != 'N/A']
-        ps_pd[1] = float(pd_lst[-1]) + 13.3
+        ps_pd[1] = float(pd_lst[-1]) + float(output_dict[f'Barmtr,{pressure[:1]+"a"}'])
         return ps_pd
     else:
         ps_pd[0] = float(output_dict[f'Pres Suct Line, {pressure}'].split()[col_start])
-        ps_pd[1] = float(output_dict[f'Pres Disch Line, {pressure}'].split() [col_start+tot_cyl - 1])
-
+        pd_lst = [pd for pd in output_dict[f'Pres Disch Line, {pressure}'].split()[:col_start+tot_cyl] if pd != '---' and pd != 'N/A']
+        ps_pd[1] = float(pd_lst[-1])
+        return ps_pd
 
 # The stage_assigner takes the service as an argument and populates an output
 #  string with each cylinder of that stage in the runM format.
@@ -363,19 +428,36 @@ def pressure_corrector(col_start, tot_cyl):
 #  variable from the report.  currently hard coded as 0.00704
 product_family = frame_dict[output_dict['Frame'][-5:]]['product_family']
 
+def loss_factor_func(serv, stg):
+    # <loss_factor>{loss_factor_dict[product_family]  [f'bore_size {stages[f"Service {service} Stage {stage + 1} Cylinder"][1]}']}</loss_factor>
+    try:
+        return loss_factor_dict[product_family]  [f'bore_size {stages[f"Service {serv} Stage {stg + 1} Cylinder"][1]}']
+    except KeyError:
+        return "none"
+
+
 def stage_assigner(service):
     output = ""
     for stage in range(int(stages[f'Service {service} Total Stages'])):
         output = output + (f"""<Stage>
                 	<number>{stage + 1}</number>
+                    <suctionTemp>{stages[f'Service {service} Stage {stage + 1} Suction Temp']}</suctionTemp>
+                    <coolerTemp>{stages[f'Service {service} Stage {stage + 1} Cooler Temp']}</coolerTemp>
                 	<Cylinder>
                 		<total>{stages[f'Service {service} Stage {stage + 1}']}</total>
-                		<product_family>{product_family}</product_family>
-                		<bore_size>{stages[f'Service {service} Stage {stage + 1} Cylinder'][1]}</bore_size>
-                		<loss_factor>{loss_factor_dict[product_family]  [f'bore_size {stages[f"Service {service} Stage {stage + 1} Cylinder"][1]}']  }</loss_factor>
-                        <throws>{' '.join(stages[f'Service {service} Stage {int(stage + 1)} Throws'])}</throws>
-                        <nominal>{stages[f'Service {service} Stage {stage + 1} Cylinder'][0]}</nominal>
+                        <throws>{', '.join(stages[f'Service {service} Stage {int(stage + 1)} Throws'])}</throws>
+                        <model>{stages[f'Service {service} Stage {stage + 1} Cylinder'][0]}</model>
                         <mawp>{stages[f'Service {service} Stage {stage + 1} Cylinder'][3]}</mawp>
+                        <bore_size>{stages[f'Service {service} Stage {stage + 1} Cylinder'][1]}</bore_size>
+                        <action>{', '.join(stages[f'Service {service} Stage {int(stage + 1)} Action'])}</action>
+                        <CESpacers>{', '.join(stages[f'Service {service} Stage {int(stage + 1)} CE Spacers'])}</CESpacers>
+                        <HESpacers>{', '.join(stages[f'Service {service} Stage {int(stage + 1)} HE Spacers'])}</HESpacers>
+                        <HEPocket>{', '.join(stages[f'Service {service} Stage {int(stage + 1)} HE Pocket'])}</HEPocket>
+                        <HEPocketUsed>{', '.join(stages[f'Service {service} Stage {int(stage + 1)} HE Pocket Used'])}</HEPocketUsed>
+                        <loss_factor>{loss_factor_func(service, stage)}</loss_factor>
+                        <product_family>{product_family}</product_family>
+
+
                 	</Cylinder>
                 </Stage>
             """)
@@ -438,6 +520,7 @@ def service_assigner():
 
 output_txt = fr"""<?xml version="1.0" encoding=UTF-8 ?>
 <Ariel_Mobile>
+    <Type>PDF</Type>
     <Version>1.0</Version>
     <Units>
         <flow>{flow}</flow>
@@ -461,6 +544,16 @@ output_txt = fr"""<?xml version="1.0" encoding=UTF-8 ?>
 		<product_family>{frame_dict[output_dict['Frame'][-5:]]['product_family']}</product_family>
 		<model>{output_dict['Frame'][-5:-2]}</model>
 		<num_throws>{output_dict['Frame'][-1]}</num_throws>
+        <Driver>
+            <type>{output_dict['Driver Type'].strip()}</type>
+            <mfg>{output_dict['Driver Mfg'].strip()}</mfg>
+            <model>{output_dict['Driver Model'].strip()}</model>
+            <config></config>
+            <ratedRPM></ratedRPM>
+            <ratedBHP>{driver_rated_BHP}</ratedBHP>
+            <derate>{driver_derate}</derate>
+            <aux>{driver_aux}</aux>
+        </Driver>
 	</Compressor>
     <Services>
 	{service_assigner()}
@@ -485,7 +578,7 @@ print(output_txt)
 #  pound or two)
 
 
-with open(save_filepath, mode='w', encoding='utf-8') as file:
-    file.writelines(output_txt)
-
-os.startfile(save_filepath)
+# with open(save_filepath, mode='w', encoding='utf-8') as file:
+#     file.writelines(output_txt)
+#
+# os.startfile(save_filepath)
