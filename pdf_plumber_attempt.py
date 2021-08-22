@@ -6,7 +6,7 @@ import os
 from frame_dict import frame_dict
 from loss_factor_dict import loss_factor_dict
 
-open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\Katmai Flash Gas.PDF'
+open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_tandem.PDF'
 save_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_file.runM'
 
 # open_filepath = None
@@ -131,7 +131,7 @@ flow = re.search(r'Target Flow, (\D+) \d+', text).group(1).strip()
 power = re.search(f'Rated RPM: \d+ Rated (\D+): \d+', text).group(1).strip()
 power_for_output = power[-2:].lower()
 temperature = re.search(r'Ambient,(.*?):', text).group(1).strip()
-pressure = re.search(r'Barmtr,(.*?):', text).group(1).strip()
+pressure = re.search(r'Pres Suct Line, (.*?)\d', text).group(1).strip()
 if re.search(r'Max RL Tot, (.*?):', text).group(1).strip() == 'lbf':
     eng_met = 'English'
     length = 'ft'
@@ -178,7 +178,7 @@ output_dict['Project'] = re.search(r'Project:(.*)', text).group(1).strip()
 
 
 output_dict[f'Elevation']=re.search(fr'Elevation,{length}:(.*?)Barmtr', text).group(1).strip()
-output_dict[f'Barmtr,{pressure}'] = re.search(fr'Barmtr,{pressure}:(.*?)Ambient', text).group(1).strip()
+output_dict[f'Barmtr,{pressure[:1]+"a"}'] = re.search(fr'Barmtr,{pressure[:-1]+"a"}:(.*?)Ambient', text).group(1).strip()
 output_dict[f'Ambient,{temperature}'] = re.search(fr'Ambient,{temperature}:(.*?)Type', text).group(1).strip()
 output_dict['Driver Type'] = re.search(r'Type:(.*)', text).group(1).strip()
 
@@ -308,12 +308,21 @@ def stg_data_checker(pos):
     else:
         return 'Stage ' + stg_data[pos]
 
-pkt_used = re.split(r"(%|turns|in|Pos, in|No Pkt)", output_dict['Vol Pkt Used'])
-for index in range(len(pkt_used)):
-    for delim in ["%", "turns", "in", "Pos, in"]:
-        if pkt_used[index] == delim:
-            pkt_used[index-1] += delim
-pkt_used = [item.strip() for item in pkt_used if item.strip() and item not in ["%", "turns", "in", "Pos, in"]]
+
+if eng_met == 'English':
+    pkt_used = re.split(r"(%|turns|in|Pos, in|No Pkt)", output_dict['Vol Pkt Used'])
+    for index in range(len(pkt_used)):
+        for delim in ["%", "turns", "in", "Pos, in"]:
+            if pkt_used[index] == delim:
+                pkt_used[index-1] += delim
+    pkt_used = [item.strip() for item in pkt_used if item.strip() and item not in ["%", "turns", "in", "Pos, in"]]
+else:
+    pkt_used = re.split(r"(%|turns|mm|Pos, cm|No Pkt)", output_dict['Vol Pkt Used'])
+    for index in range(len(pkt_used)):
+        for delim in ["%", "turns", "mm", "Pos, cm"]:
+            if pkt_used[index] == delim:
+                pkt_used[index-1] += delim
+    pkt_used = [item.strip() for item in pkt_used if item.strip() and item not in ["%", "turns", "mm", "Pos, cm"]]
 
 
 cylinders = []
@@ -403,14 +412,15 @@ for service in range(int(num_services)):
 def pressure_corrector(col_start, tot_cyl):
     ps_pd = ["", ""]
     if g_or_abs == 'Gauge':
-        ps_pd[0] = float(output_dict[f'Pres Suct Line, {pressure}'].split()[col_start]) + 13.3
+        ps_pd[0] = float(output_dict[f'Pres Suct Line, {pressure}'].split()[col_start]) + float(output_dict[f'Barmtr,{pressure[:1]+"a"}'])
         pd_lst = [pd for pd in output_dict[f'Pres Disch Line, {pressure}'].split()[:col_start+tot_cyl] if pd != '---' and pd != 'N/A']
-        ps_pd[1] = float(pd_lst[-1]) + 13.3
+        ps_pd[1] = float(pd_lst[-1]) + float(output_dict[f'Barmtr,{pressure[:1]+"a"}'])
         return ps_pd
     else:
         ps_pd[0] = float(output_dict[f'Pres Suct Line, {pressure}'].split()[col_start])
-        ps_pd[1] = float(output_dict[f'Pres Disch Line, {pressure}'].split() [col_start+tot_cyl - 1])
-
+        pd_lst = [pd for pd in output_dict[f'Pres Disch Line, {pressure}'].split()[:col_start+tot_cyl] if pd != '---' and pd != 'N/A']
+        ps_pd[1] = float(pd_lst[-1])
+        return ps_pd
 
 # The stage_assigner takes the service as an argument and populates an output
 #  string with each cylinder of that stage in the runM format.
@@ -418,11 +428,20 @@ def pressure_corrector(col_start, tot_cyl):
 #  variable from the report.  currently hard coded as 0.00704
 product_family = frame_dict[output_dict['Frame'][-5:]]['product_family']
 
+def loss_factor_func(serv, stg):
+    # <loss_factor>{loss_factor_dict[product_family]  [f'bore_size {stages[f"Service {service} Stage {stage + 1} Cylinder"][1]}']}</loss_factor>
+    try:
+        return loss_factor_dict[product_family]  [f'bore_size {stages[f"Service {serv} Stage {stg + 1} Cylinder"][1]}']
+    except KeyError:
+        return "none"
+
+
 def stage_assigner(service):
     output = ""
     for stage in range(int(stages[f'Service {service} Total Stages'])):
         output = output + (f"""<Stage>
                 	<number>{stage + 1}</number>
+                    <suctionTemp>{stages[f'Service {service} Stage {stage + 1} Suction Temp']}</suctionTemp>
                     <coolerTemp>{stages[f'Service {service} Stage {stage + 1} Cooler Temp']}</coolerTemp>
                 	<Cylinder>
                 		<total>{stages[f'Service {service} Stage {stage + 1}']}</total>
@@ -435,7 +454,7 @@ def stage_assigner(service):
                         <HESpacers>{', '.join(stages[f'Service {service} Stage {int(stage + 1)} HE Spacers'])}</HESpacers>
                         <HEPocket>{', '.join(stages[f'Service {service} Stage {int(stage + 1)} HE Pocket'])}</HEPocket>
                         <HEPocketUsed>{', '.join(stages[f'Service {service} Stage {int(stage + 1)} HE Pocket Used'])}</HEPocketUsed>
-                        <loss_factor>{loss_factor_dict[product_family]  [f'bore_size {stages[f"Service {service} Stage {stage + 1} Cylinder"][1]}']  }</loss_factor>
+                        <loss_factor>{loss_factor_func(service, stage)}</loss_factor>
                         <product_family>{product_family}</product_family>
 
 
