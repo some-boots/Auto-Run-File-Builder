@@ -322,7 +322,7 @@ for index in range(len(output_dict['Cyl Model'].split())):
     cylinders[index].append(output_dict['Cyl Action'].split()[index])
     cylinders[index].append(output_dict['HE Spcrs Used/Max'].split()[index][0])
     cylinders[index].append(output_dict['CE Spcrs Used/Max'].split()[index][0])
-    cylinders[index].append(output_dict['HE Vol Pkt Avail'].replace('No Pkt', 'No_Pkt').split()[index])
+    cylinders[index].append(output_dict['HE Vol Pkt Avail'].replace('No Pkt', 'No_Pkt').split()[index].replace('No_Pkt', 'No Pkt'))
     cylinders[index].append(pkt_used[index])
 
 # for cyl in cylinders:
