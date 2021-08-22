@@ -6,7 +6,7 @@ import os
 from frame_dict import frame_dict
 from loss_factor_dict import loss_factor_dict
 
-open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_file_two.PDF'
+open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\Katmai Flash Gas.PDF'
 save_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_file.runM'
 
 # open_filepath = None
@@ -131,13 +131,21 @@ flow = re.search(r'Target Flow, (\D+) \d+', text).group(1).strip()
 power = re.search(f'Rated RPM: \d+ Rated (\D+): \d+', text).group(1).strip()
 power_for_output = power[-2:].lower()
 temperature = re.search(r'Ambient,(.*?):', text).group(1).strip()
-pressure = re.search(r'Cyl MAWP, (.*?) \d+', text).group(1).strip()
+pressure = re.search(r'Barmtr,(.*?):', text).group(1).strip()
 if re.search(r'Max RL Tot, (.*?):', text).group(1).strip() == 'lbf':
     eng_met = 'English'
     length = 'ft'
+    small_length = 'in'
+    force = 'lbf'
+    piston_speed = 'FPM'
+    displacement = 'CFM'
 else:
     eng_met = 'Metric'
     length = 'm'
+    small_length = 'mm'
+    force = 'kN'
+    piston_speed = 'm/s'
+    displacement = 'm3/h'
 
 # Here we are looking at the pressure units to determine if the pressure is in
 #  gauge or absolute.  Then, if the pressure units are atm, we leave them as is
@@ -170,13 +178,13 @@ output_dict['Project'] = re.search(r'Project:(.*)', text).group(1).strip()
 
 
 output_dict[f'Elevation']=re.search(fr'Elevation,{length}:(.*?)Barmtr', text).group(1).strip()
-output_dict['Barmtr,psia'] = re.search(r'Barmtr,psia:(.*?)Ambient', text).group(1).strip()
-output_dict['Ambient,F'] = re.search(r'Ambient,F:(.*?)Type', text).group(1).strip()
+output_dict[f'Barmtr,{pressure}'] = re.search(fr'Barmtr,{pressure}:(.*?)Ambient', text).group(1).strip()
+output_dict[f'Ambient,{temperature}'] = re.search(fr'Ambient,{temperature}:(.*?)Type', text).group(1).strip()
 output_dict['Driver Type'] = re.search(r'Type:(.*)', text).group(1).strip()
 
 output_dict['Frame'] = re.search(r'Frame:(.*?)Stroke', text).group(1).strip()
-output_dict['Stroke'] = re.search(r'Stroke, in:(.*?)Rod', text).group(1).strip()
-output_dict['Rod Dia'] = re.search(r'Dia, in:(.*?)Mfg', text).group(1).strip()
+output_dict['Stroke'] = re.search(fr'Stroke, {small_length}:(.*?)Rod', text).group(1).strip()
+output_dict['Rod Dia'] = re.search(fr'Dia, {small_length}:(.*?)Mfg', text).group(1).strip()
 
 # driver MFG and Model require a bit of logic since they are the only two values that
 #  can be left blank.  When blank, we manually input the 'none' string as the value
@@ -185,9 +193,9 @@ if re.search(r'Mfg:(.*)', text).group(1):
 else:
     output_dict['Driver Mfg'] = "none"
 
-output_dict['Max RL Tot'] = re.search(r'Max RL Tot, lbf:(.*?)Max RL Tens', text).group(1).strip()
-output_dict['Max RL Tens'] = re.search(r'Max RL Tens, lbf:(.*?)Max RL Comp', text).group(1).strip()
-output_dict['Max RL Comp'] = re.search(r'Max RL Comp, lbf:(.*?)Model', text).group(1).strip()
+output_dict['Max RL Tot'] = re.search(fr'Max RL Tot, {force}:(.*?)Max RL Tens', text).group(1).strip()
+output_dict['Max RL Tens'] = re.search(fr'Max RL Tens, {force}:(.*?)Max RL Comp', text).group(1).strip()
+output_dict['Max RL Comp'] = re.search(fr'Max RL Comp, {force}:(.*?)Model', text).group(1).strip()
 if re.search(r'Model:(.*)', text).group(1):
     output_dict['Driver Model'] = re.search(r'Model:(.*)', text).group(1)
 else:
@@ -195,13 +203,13 @@ else:
 
 output_dict['Rated RPM'] = re.search(fr'Rated RPM:(.*?)Rated {power}', text).group(1).strip()
 output_dict[f'Rated {power}'] = re.search(fr'Rated {power}:(.*?)Rated PS', text).group(1).strip()
-output_dict['Rated PS'] = re.search(fr'Rated PS FPM:(.*?){power}', text).group(1).strip()
+output_dict['Rated PS'] = re.search(fr'Rated PS {piston_speed}:(.*?){power}', text).group(1).strip()
 output_dict[f'{power}'] = re.search(fr'\d {power}:(.*)', text).group(1).strip()
 
 
 output_dict['Calc RPM'] = re.search(fr'Calc RPM:(.*?){power}:', text).group(1).strip()
 output_dict[f'Calc {power}'] = re.search(fr'{power}:(.*?)Calc PS', text).group(1).strip()
-output_dict['Calc PS'] = re.search(r'Calc PS FPM:(.*?)Avail', text).group(1).strip()
+output_dict['Calc PS'] = re.search(fr'Calc PS {piston_speed}:(.*?)Avail', text).group(1).strip()
 output_dict['Avail HP'] = re.search(r'Avail:(.*)', text).group(1).strip()
 ###############################################
 ###############################################
@@ -235,24 +243,24 @@ output_dict[f'Temp Suct, {temperature}'] = re.search(fr'Temp Suct, {temperature}
 output_dict[f'Temp Clr Disch, {temperature}'] = re.search(fr'Temp Clr Disch, {temperature}(.*)', text).group(1).strip()
 output_dict['Cylinder Data'] = re.search(r'Cylinder Data:(.*)', text).group(1).strip()
 output_dict['Cyl Model'] = re.search(r'Cyl Model(.*)', text).group(1).strip()
-output_dict['Cyl Bore, in'] = re.search(r'Cyl Bore, in(.*)', text).group(1).strip()
-output_dict[f'Cyl RDP (API), {pressure}'] = re.search(fr'Cyl RDP \(API\), {pressure}(.*)', text).group(1).strip()
-output_dict[f'Cyl MAWP, {pressure}'] = re.search(fr'Cyl MAWP, {pressure}(.*)', text).group(1).strip()
+output_dict[f'Cyl Bore, {small_length}'] = re.search(fr'Cyl Bore, {small_length}(.*)', text).group(1).strip()
+output_dict[f'Cyl RDP (API), {pressure[:-1]+"g"}'] = re.search(fr'Cyl RDP \(API\), {pressure[:-1]+"g"}(.*)', text).group(1).strip()
+output_dict[f'Cyl MAWP, {pressure[:-1]+"g"}'] = re.search(fr'Cyl MAWP, {pressure[:-1]+"g"}(.*)', text).group(1).strip()
 output_dict['Cyl Action'] = re.search(r'Cyl Action(.*)', text).group(1).strip()
-output_dict['Cyl Disp, CFM'] = re.search(r'Cyl Disp, CFM(.*)', text).group(1).strip()
+output_dict[f'Cyl Disp, {displacement}'] = re.search(fr'Cyl Disp, {displacement}(.*)', text).group(1).strip()
 output_dict[f'Pres Suct Intl, {pressure}'] = re.search(fr'Pres Suct Intl, {pressure}(.*)', text).group(1).strip()
-output_dict['Temp Suct Intl, F'] = re.search(r'Temp Suct Intl, F(.*)', text).group(1).strip()
+output_dict[f'Temp Suct Intl, {temperature}'] = re.search(fr'Temp Suct Intl, {temperature}(.*)', text).group(1).strip()
 output_dict[f'Pres Disch Intl, {pressure}'] = re.search(fr'Pres Disch Intl, {pressure}(.*)', text).group(1).strip()
 output_dict[f'Temp Disch Intl, {temperature}'] = re.search(fr'Temp Disch Intl, {temperature}(.*)', text).group(1).strip()
-output_dict['HE Suct Gas Vel, FPM'] = re.search(r'HE Suct Gas Vel, FPM(.*)', text).group(1).strip()
-output_dict['HE Disch Gas Vel, FPM'] = re.search(r'HE Disch Gas Vel, FPM(.*)', text).group(1).strip()
+output_dict[f'HE Suct Gas Vel, {piston_speed}'] = re.search(fr'HE Suct Gas Vel, {piston_speed}(.*)', text).group(1).strip()
+output_dict[f'HE Disch Gas Vel, {piston_speed}'] = re.search(fr'HE Disch Gas Vel, {piston_speed}(.*)', text).group(1).strip()
 output_dict['HE Spcrs Used/Max'] = re.search(r'HE Spcrs Used/Max(.*)', text).group(1).strip()
 output_dict['HE Vol Pkt Avail'] = re.search(r'HE Vol Pkt Avail(.*)', text).group(1).strip()
 output_dict['Vol Pkt Used'] = re.search(r'Vol Pkt Used(.*)', text).group(1).strip()
 output_dict['HE Min Clr, %'] = re.search(r'HE Min Clr, %(.*)', text).group(1).strip()
 output_dict['HE Total Clr, %'] = re.search(r'HE Total Clr, %(.*)', text).group(1).strip()
-output_dict['CE Suct Gas Vel, FPM'] = re.search(r'CE Suct Gas Vel, FPM(.*)', text).group(1).strip()
-output_dict['CE Disch Gas Vel, FPM'] = re.search(r'CE Disch Gas Vel, FPM(.*)', text).group(1).strip()
+output_dict[f'CE Suct Gas Vel, {piston_speed}'] = re.search(fr'CE Suct Gas Vel, {piston_speed}(.*)', text).group(1).strip()
+output_dict[f'CE Disch Gas Vel, {piston_speed}'] = re.search(fr'CE Disch Gas Vel, {piston_speed}(.*)', text).group(1).strip()
 output_dict['CE Spcrs Used/Max'] = re.search(r'CE Spcrs Used/Max(.*)', text).group(1).strip()
 output_dict['CE Min Clr, %'] = re.search(r'CE Min Clr, %(.*)', text).group(1).strip()
 output_dict['CE Total Clr, %'] = re.search(r'CE Total Clr, %(.*)', text).group(1).strip()
@@ -262,7 +270,7 @@ output_dict['Suct Pseudo-Q HE/CE'] = re.search(r'Suct Pseudo-Q HE/CE(.*)', text)
 output_dict['Gas Rod Ld Comp, %'] = re.search(r'Gas Rod Ld Comp, %(.*)', text).group(1).strip()
 output_dict['Gas Rod Ld Tens, %'] = re.search(r'Gas Rod Ld Tens, %(.*)', text).group(1).strip()
 output_dict['Gas Rod Ld Total, %'] = re.search(r'Gas Rod Ld Total, %(.*)', text).group(1).strip()
-output_dict['Xhd Pin Deg/%Rvrsl lbf'] = re.search(r'Xhd Pin Deg/%Rvrsl lbf(.*)', text).group(1).strip()
+output_dict[f'Xhd Pin Deg/%Rvrsl {force}'] = re.search(fr'Xhd Pin Deg/%Rvrsl {force}(.*)', text).group(1).strip()
 # output_dict['Flow Calc, MMSCFD'] = re.search(r'Flow Calc, MMSCFD(.*)', text).group(1).strip()
 output_dict[f'Cyl {power}'] = re.search(fr'Cyl {power}(.*)', text).group(1).strip()
 
@@ -313,9 +321,9 @@ cylinders = []
 for index in range(len(output_dict['Cyl Model'].split())):
     cylinders.append([
     output_dict['Cyl Model'].split()[index],
-    output_dict['Cyl Bore, in'].split()[index],
-    output_dict[f'Cyl RDP (API), {pressure}'].split()[index],
-    output_dict[f'Cyl MAWP, {pressure}'].split()[index],
+    output_dict[f'Cyl Bore, {small_length}'].split()[index],
+    output_dict[f'Cyl RDP (API), {pressure[:-1]+"g"}'].split()[index],
+    output_dict[f'Cyl MAWP, {pressure[:-1]+"g"}'].split()[index],
     output_dict[f'Cylinder Data'].split('Throw')[index + 1],
     ])
     cylinders[index].append(stg_data_checker(index))
