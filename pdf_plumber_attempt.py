@@ -6,7 +6,7 @@ import os
 from frame_dict import frame_dict
 from loss_factor_dict import loss_factor_dict
 
-open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_tandem.PDF'
+open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_report.PDF'
 save_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_file.runM'
 
 # open_filepath = None

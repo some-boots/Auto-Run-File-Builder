@@ -1,3 +1,14 @@
+#################################################
+#################################################
+#################################################
+# currently the program works ok when the run file is in english units.
+# in the pressure corrector section, I convert the pressures over to psia for the input.
+# I've also got the temperature converting to R.
+# it looks like the runM flow needs to be in MMSCFD, elevation in Ft so these are
+# future things to work on.
+
+
+
 import pdfplumber
 import re
 import tkinter as tk
@@ -6,7 +17,7 @@ import os
 from frame_dict import frame_dict
 from loss_factor_dict import loss_factor_dict
 
-open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_tandem_3.PDF'
+open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\Bria_is_the_best.PDF'
 save_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_file.runM'
 
 # open_filepath = None
@@ -132,7 +143,6 @@ power = re.search(f'Rated RPM: \d+ Rated (\D+): \d+', text).group(1).strip()
 power_for_output = power[-2:].lower()
 temperature = re.search(r'Ambient,(.*?):', text).group(1).strip()
 pressure = re.search(r'Pres Suct Line, (.*?)\d', text).group(1).strip()
-print(pressure[:-1])
 if re.search(r'Max RL Tot, (.*?):', text).group(1).strip() == 'lbf':
     eng_met = 'English'
     length = 'ft'
@@ -412,7 +422,6 @@ for service in range(int(num_services)):
 
 def pressure_corrector(col_start, tot_cyl):
     ps_pd = ["", ""]
-    print(g_or_abs)
     if g_or_abs == 'Gauge':
         ps_pd[0] = float(output_dict[f'Pres Suct Line, {pressure}'].split()[col_start]) + float(output_dict[f'Barmtr,{pressure[:1]+"a"}'])
         pd_lst = [pd for pd in output_dict[f'Pres Disch Line, {pressure}'].split()[:col_start+tot_cyl] if pd != '---' and pd != 'N/A']
@@ -423,12 +432,18 @@ def pressure_corrector(col_start, tot_cyl):
         pd_lst = [pd for pd in output_dict[f'Pres Disch Line, {pressure}'].split()[:col_start+tot_cyl] if pd != '---' and pd != 'N/A']
         ps_pd[1] = float(pd_lst[-1])
 
-    print(f'pre_conversion ps_pd : {ps_pd}')
     if pressure[:-1] == "psi":
         pass
     elif pressure[:-1] == "MPa":
         ps_pd = [press * 145.038 for press in ps_pd]
-    print(f"ps_pd : {ps_pd}")
+    elif pressure[:-1] == 'bar':
+        ps_pd = [press * 14.5038 for press in ps_pd]
+    elif pressure[:-1] == "kPa":
+        ps_pd = [press * 0.145038 for press in ps_pd]
+    elif pressure[:-1] == "kg/cm2":
+        ps_pd = [press * 14.22334334285 for press in ps_pd]
+    elif pressure == "atm":
+        ps_pd = [press * 14.6959 for press in ps_pd]
 
     return ps_pd
 
