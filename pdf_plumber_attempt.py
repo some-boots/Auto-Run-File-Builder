@@ -127,7 +127,7 @@ with pdfplumber.open(open_filepath) as pdf:
 #  units, like MMSCFD, which we need to know which units are being utilized
 #  as well as to effectively search the rest of the text string for other
 #  values ie Calc Flow {flow}
-flow = re.search(r'Target Flow, (\D+) \d+', text).group(1).strip()
+flow = re.search(r'Target Flow, (.*?) \d', text).group(1).strip()
 power = re.search(f'Rated RPM: \d+ Rated (\D+): \d+', text).group(1).strip()
 power_for_output = power[-2:].lower()
 temperature = re.search(r'Ambient,(.*?):', text).group(1).strip()
