@@ -131,7 +131,7 @@ flow = re.search(r'Target Flow, (.*?) \d', text).group(1).strip()
 power = re.search(f'Rated RPM: \d+ Rated (\D+): \d+', text).group(1).strip()
 power_for_output = power[-2:].lower()
 temperature = re.search(r'Ambient,(.*?):', text).group(1).strip()
-pressure = re.search(r'Pres Suct Line, (.*?)\d', text).group(1).strip()
+pressure = re.search(r'Pres Suct Line, (.*?) \d', text).group(1).strip()
 if re.search(r'Max RL Tot, (.*?):', text).group(1).strip() == 'lbf':
     eng_met = 'English'
     length = 'ft'
