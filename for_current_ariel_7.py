@@ -17,7 +17,7 @@ import os
 from frame_dict import frame_dict
 from loss_factor_dict import loss_factor_dict
 
-open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\Bria_is_the_best.PDF'
+open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_tandem_4.PDF'
 save_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_file.runM'
 
 # open_filepath = None
@@ -138,7 +138,7 @@ with pdfplumber.open(open_filepath) as pdf:
 #  units, like MMSCFD, which we need to know which units are being utilized
 #  as well as to effectively search the rest of the text string for other
 #  values ie Calc Flow {flow}
-flow = re.search(r'Target Flow, (\D+) \d+', text).group(1).strip()
+flow = re.search(r'Target Flow, (.*?) \d', text).group(1).strip()
 power = re.search(f'Rated RPM: \d+ Rated (\D+): \d+', text).group(1).strip()
 power_for_output = power[-2:].lower()
 temperature = re.search(r'Ambient,(.*?):', text).group(1).strip()
@@ -448,6 +448,26 @@ def pressure_corrector(col_start, tot_cyl):
     return ps_pd
 
 
+def volume_converter(vol_type, vol_num):
+    if vol_type == "MMSCFD":
+        return vol_num
+    elif vol_type == "MSCFD":
+        return round(float(vol_num) * 0.001, 3)
+    elif vol_type == "SCFH":
+        return round(float(vol_num) * 0.000024, 3)
+    elif vol_type == "SCFM":
+        return round(float(vol_num) * 0.00144, 3)
+    elif vol_type == "lb/h":
+        return round(float(vol_num) / 2066.953, 3)
+    elif vol_type == "Nm3/h":
+        return round(float(vol_num) / 1116.641, 3)
+    elif vol_type == "Sm3/h":
+        return round(float(vol_num) / 1177.961, 3)
+    elif vol_type == "E3m3/D":
+        return round(float(vol_num) / 28.271, 3)
+    elif vol_type == "kg/h":
+        return round(float(vol_num) / 937.555, 3)
+
 # The stage_assigner takes the service as an argument and populates an output
 #  string with each cylinder of that stage in the runM format.
 #  Need to talk with the guys about what loss_factor is and how to make this
@@ -459,7 +479,12 @@ def loss_factor_func(serv, stg):
     try:
         return loss_factor_dict[product_family]  [f'bore_size {stages[f"Service {serv} Stage {stg + 1} Cylinder"][1]}']
     except KeyError:
-        return "none"
+        # return "none"
+        try:
+            return loss_factor_dict[product_family]  [f'bore_size {float(stages[f"Service {serv} Stage {stg + 1} Cylinder"][1])* 0.0393701:.3f}']
+        except KeyError:
+            print(f'bore_size {float(stages[f"Service {serv} Stage {stg + 1} Cylinder"][1])* 0.0393701:.3f}')
+            return 'none'
 
 
 def stage_assigner(service):
@@ -492,6 +517,12 @@ def temp_converter(suct_temp):
         suct_temp_converted = suct_temp
     return suct_temp_converted
 
+def elevation_converter(elevation):
+    if eng_met == 'English':
+        return elevation
+    else:
+        return round(float(elevation) * 3.28084, 3)
+
 # gas_type looks at the sg and takes a guess at the gas_type based on that.
 #  Future improvement might be to search the text string for 'Sour Gas' and
 #  select sour gas in that scenario
@@ -513,7 +544,7 @@ def service_assigner():
     for service in range(1, int(stages[f'Total Services']) + 1):
         output = output + f"""
         <Service>
-            <target_flow>{output_dict[f'Flow Calc, {flow}'].split()[stages[f'Service {service} Column Start']]}</target_flow>
+            <target_flow>{volume_converter(flow, output_dict[f'Flow Calc, {flow}'].split()[stages[f'Service {service} Column Start']])}</target_flow>
             <target_bhp>{output_dict[f'Calc {power}']}</target_bhp>
             <suction_pressure>{pressure_corrector(stages[f'Service {service} Column Start'], stages[f'Service {service} Total Cylinders'])[0]}</suction_pressure>
             <discharge_pressure>{pressure_corrector(stages[f'Service {service} Column Start'], stages[f'Service {service} Total Cylinders'])[1]}</discharge_pressure>
@@ -554,7 +585,7 @@ output_txt = fr"""<?xml version="1.0" encoding=UTF-8 ?>
 		<project>{output_dict['Project']}</project>
 		<location>NA</location>
 		<country>NA</country>
-		<elevation>{output_dict["Elevation"]}</elevation>
+		<elevation>{elevation_converter(output_dict["Elevation"])}</elevation>
 	</User>
 	<Compressor>
 		<RPM>{output_dict['Calc RPM']}</RPM>
