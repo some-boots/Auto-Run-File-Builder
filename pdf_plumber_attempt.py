@@ -6,7 +6,7 @@ import os
 from frame_dict import frame_dict
 from loss_factor_dict import loss_factor_dict
 
-open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\acid_gas_compressor.PDF'
+open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_report_2.PDF'
 save_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_file.runM'
 
 # open_filepath = None
@@ -417,31 +417,30 @@ def cyl_assigner(total_cyls, stg, serv):
     cyl_output = ""
     # 0-model, 1-bore, 2-rdp, 3-mawp, 4-throw, 5-stage, 6-action, 7-he spcrs, 8-ce spcrs, 9-pkt avail, 10-pkt used
     for cyl in range(total_cyls):
-        cyl_output = cyl_output + (f"""         <Cylinder>
-                        <throws>{stages[f'Service {serv} Stage {int(stg + 1)} Throws'][cyl]}</throws>
-                        <model>{stages[f'Service {serv} Stage {stg + 1} Cylinder'][cyl][0]}</model>
-                        <bore_size>{stages[f'Service {serv} Stage {stg + 1} Cylinder'][cyl][1]}</bore_size>
-                        <action>{stages[f'Service {serv} Stage {stg + 1} Cylinder'][cyl][6]}</action>
-                        <CESpacers>{stages[f'Service {serv} Stage {stg + 1} Cylinder'][cyl][8]}</CESpacers>
-                        <HESpacers>{stages[f'Service {serv} Stage {stg + 1} Cylinder'][cyl][7]}</HESpacers>
-                        <HEPocket>{stages[f'Service {serv} Stage {stg + 1} Cylinder'][cyl][9]}</HEPocket>
-                        <HEPocketUsed>{stages[f'Service {serv} Stage {stg + 1} Cylinder'][cyl][10]}</HEPocketUsed>
-                    </Cylinder>
-        """)
+        cyl_output = cyl_output + (f"""
+                        <Cylinder>
+                            <throw>{stages[f'Service {serv} Stage {int(stg + 1)} Throws'][cyl]}</throw>
+                            <model>{stages[f'Service {serv} Stage {stg + 1} Cylinder'][cyl][0]}</model>
+                            <bore_size>{stages[f'Service {serv} Stage {stg + 1} Cylinder'][cyl][1]}</bore_size>
+                            <action>{stages[f'Service {serv} Stage {stg + 1} Cylinder'][cyl][6]}</action>
+                            <CESpacers>{stages[f'Service {serv} Stage {stg + 1} Cylinder'][cyl][8]}</CESpacers>
+                            <HESpacers>{stages[f'Service {serv} Stage {stg + 1} Cylinder'][cyl][7]}</HESpacers>
+                            <HEPocket>{stages[f'Service {serv} Stage {stg + 1} Cylinder'][cyl][9]}</HEPocket>
+                            <HEPocketUsed>{stages[f'Service {serv} Stage {stg + 1} Cylinder'][cyl][10]}</HEPocketUsed>
+                        </Cylinder>""")
     return cyl_output
 def stage_assigner(service):
     output = ""
     for stage in range(int(stages[f'Service {service} Total Stages'])):
-        output = output + (f"""<Stage>
+        output = output + (f"""
+                <Stage>
                 	<number>{stage + 1}</number>
                     <suctionTemp>{stages[f'Service {service} Stage {stage + 1} Suction Temp']}</suctionTemp>
                     <coolerTemp>{stages[f'Service {service} Stage {stage + 1} Cooler Temp']}</coolerTemp>
                 	<Cylinders>
-                        <total>{stages[f'Service {service} Stage {stage + 1}']}</total>
-                        {cyl_assigner(int(stages[f'Service {service} Stage {stage + 1}']), stage, service)}
+                        <total>{stages[f'Service {service} Stage {stage + 1}']}</total>{cyl_assigner(int(stages[f'Service {service} Stage {stage + 1}']), stage, service)}
                 	</Cylinders>
-                </Stage>
-            """)
+                </Stage>""")
     return output
 
 # def stage_assigner(service):
@@ -517,10 +516,9 @@ def service_assigner():
             <Zs>{output_dict['Comp Suct (Zs)'].split()[stages[f'Service {service} Column Start']]}</Zs>
             <Zd>{output_dict['Comp Disch (Zd)'].split()[stages[f'Service {service} Column Start']]}</Zd>
             <total_stages>{stages[f'Service {service} Total Stages']}</total_stages>
-            <Stages>
-                {stage_assigner(service)}
+            <Stages>{stage_assigner(service)}
             </Stages>
-    </Service>"""
+        </Service>"""
     return output
 
 
@@ -557,16 +555,13 @@ output_txt = fr"""<?xml version="1.0" encoding=UTF-8 ?>
             <type>{output_dict['Driver Type'].strip()}</type>
             <mfg>{output_dict['Driver Mfg'].strip()}</mfg>
             <model>{output_dict['Driver Model'].strip()}</model>
-            <config></config>
-            <ratedRPM></ratedRPM>
             <ratedBHP>{driver_rated_BHP}</ratedBHP>
             <derate>{driver_derate}</derate>
             <aux>{driver_aux}</aux>
         </Driver>
 	</Compressor>
-    <Services>
-	{service_assigner()}
-    </Services>
+    <Services>{service_assigner()}
+	</Services>
 </Ariel_Mobile>
 """
 
