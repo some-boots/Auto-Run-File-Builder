@@ -6,7 +6,7 @@ import os
 from frame_dict import frame_dict
 from loss_factor_dict import loss_factor_dict
 
-open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_report.PDF'
+open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\acid_gas_compressor.PDF'
 save_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_file.runM'
 
 # open_filepath = None
@@ -95,31 +95,6 @@ with pdfplumber.open(open_filepath) as pdf:
 
 # print(text)
 
-# Here we are just creating a dictionary that will later be used to associate
-#  the frame model to it's correct product family
-# product_family = {}
-# product_family['JGN'] = r'JGN/JGQ'
-# product_family['JGQ'] = r'JGN/JGQ'
-# product_family['KB100'] = r'KB100'
-# product_family['JGM'] = r'JGM/JGP'
-# product_family['JGP'] = r'JGM/JGP'
-# product_family['JG'] = r'JG/JGA'
-# product_family['JGA'] = r'JG/JGA'
-# product_family['JGR'] = r'JGR'
-# product_family['KBK'] = r'KBK/KBT'
-# product_family['KBT'] = r'KBK/KBT'
-# product_family['KBE'] = r'KBE'
-# product_family['JGJ'] = r'JGJ'
-# product_family['JGT'] = r'JGT'
-# product_family['JGC'] = r'JGC/JGD/JGF'
-# product_family['JGD'] = r'JGC/JGD/JGF'
-# product_family['JGF'] = r'JGC/JGD/JGF'
-# product_family['KBU'] = r'KBU/KBZ'
-# product_family['KBZ'] = r'KBU/KBZ'
-# product_family['KBB'] = r'KBB/KBV'
-# product_family['KBV'] = r'KBB/KBV'
-
-# units_dict = {}
 
 # here we search the text string for particular attributes using regular
 #  expressions.  We need many of these attributes to create the output_dict
@@ -242,7 +217,8 @@ output_dict['Pres Ratio F/F'] = re.search(r'Pres Ratio F/F(.*)', text).group(1).
 output_dict[f'Temp Suct, {temperature}'] = re.search(fr'Temp Suct, {temperature}(.*)', text).group(1).strip()
 output_dict[f'Temp Clr Disch, {temperature}'] = re.search(fr'Temp Clr Disch, {temperature}(.*)', text).group(1).strip()
 output_dict['Cylinder Data'] = re.search(r'Cylinder Data:(.*)', text).group(1).strip()
-output_dict['Cyl Model'] = re.search(r'Cyl Model(.*)', text).group(1).strip()
+# output_dict['Cyl Model'] = re.search(r'Cyl Model(.*)', text).group(1).strip()
+output_dict['Cyl Model'] = re.search(r'Cyl Model(.*)Cyl Bore', text, re.DOTALL).group(1).replace("\n", "").strip()
 output_dict[f'Cyl Bore, {small_length}'] = re.search(fr'Cyl Bore, {small_length}(.*)', text).group(1).strip()
 output_dict[f'Cyl RDP (API), {pressure[:-1]+"g"}'] = re.search(fr'Cyl RDP \(API\), {pressure[:-1]+"g"}(.*)', text).group(1).strip()
 output_dict[f'Cyl MAWP, {pressure[:-1]+"g"}'] = re.search(fr'Cyl MAWP, {pressure[:-1]+"g"}(.*)', text).group(1).strip()
@@ -256,7 +232,8 @@ output_dict[f'HE Suct Gas Vel, {piston_speed}'] = re.search(fr'HE Suct Gas Vel, 
 output_dict[f'HE Disch Gas Vel, {piston_speed}'] = re.search(fr'HE Disch Gas Vel, {piston_speed}(.*)', text).group(1).strip()
 output_dict['HE Spcrs Used/Max'] = re.search(r'HE Spcrs Used/Max(.*)', text).group(1).strip()
 output_dict['HE Vol Pkt Avail'] = re.search(r'HE Vol Pkt Avail(.*)', text).group(1).strip()
-output_dict['Vol Pkt Used'] = re.search(r'Vol Pkt Used(.*)', text).group(1).strip()
+# output_dict['Vol Pkt Used'] = re.search(r'Vol Pkt Used(.*)', text).group(1).strip()
+output_dict['Vol Pkt Used'] = re.search(r'Vol Pkt Used(.*)HE Min Clr', text, re.DOTALL).group(1).replace("\n", " ").strip()
 output_dict['HE Min Clr, %'] = re.search(r'HE Min Clr, %(.*)', text).group(1).strip()
 output_dict['HE Total Clr, %'] = re.search(r'HE Total Clr, %(.*)', text).group(1).strip()
 output_dict[f'CE Suct Gas Vel, {piston_speed}'] = re.search(fr'CE Suct Gas Vel, {piston_speed}(.*)', text).group(1).strip()
@@ -363,7 +340,7 @@ column_location = 0
 for service in range(int(num_services)):
     stages[f'Service {service + 1} Column Start'] = column_location
     for stage in range(int(stages[f'Service {service + 1} Total Stages'])):
-        stages[f'Service {service + 1} Stage {int(stage + 1)} Cylinder'] = cylinders[column_location]
+        stages[f'Service {service + 1} Stage {int(stage + 1)} Cylinder'] = [cylinders[column_location]]
         stages[f'Service {service + 1} Stage {int(stage + 1)} Column Start'] = column_location
         stages[f'Service {service +1} Stage {int(stage + 1)} Suction Temp'] = output_dict[f'Temp Suct, {temperature}'].split()[column_location]
         stages[f'Service {service +1} Stage {int(stage + 1)} Cooler Temp'] = output_dict[f'Temp Clr Disch, {temperature}'].split()[column_location]
@@ -383,6 +360,7 @@ for service in range(int(num_services)):
             he_spacers.append(cylinders[temp_loc][7])
             he_pocket.append(cylinders[temp_loc][9])
             he_pocket_used.append(cylinders[temp_loc][10])
+            stages[f'Service {service + 1} Stage {int(stage + 1)} Cylinder'].append(cylinders[temp_loc])
             temp_loc += 1
         stages[f'Service {service + 1} Stage {int(stage + 1)} Throws'] = throws
         stages[f'Service {service + 1} Stage {int(stage + 1)} Action'] = action
@@ -412,14 +390,14 @@ for service in range(int(num_services)):
 def pressure_corrector(col_start, tot_cyl):
     ps_pd = ["", ""]
     if g_or_abs == 'Gauge':
-        ps_pd[0] = float(output_dict[f'Pres Suct Line, {pressure}'].split()[col_start]) + float(output_dict[f'Barmtr,{pressure[:1]+"a"}'])
+        ps_pd[0] = round(float(output_dict[f'Pres Suct Line, {pressure}'].split()[col_start]) + float(output_dict[f'Barmtr,{pressure[:1]+"a"}']), 3)
         pd_lst = [pd for pd in output_dict[f'Pres Disch Line, {pressure}'].split()[:col_start+tot_cyl] if pd != '---' and pd != 'N/A']
-        ps_pd[1] = float(pd_lst[-1]) + float(output_dict[f'Barmtr,{pressure[:1]+"a"}'])
+        ps_pd[1] = round(float(pd_lst[-1]) + float(output_dict[f'Barmtr,{pressure[:1]+"a"}']), 3)
         return ps_pd
     else:
-        ps_pd[0] = float(output_dict[f'Pres Suct Line, {pressure}'].split()[col_start])
+        ps_pd[0] = round(float(output_dict[f'Pres Suct Line, {pressure}'].split()[col_start]), 3)
         pd_lst = [pd for pd in output_dict[f'Pres Disch Line, {pressure}'].split()[:col_start+tot_cyl] if pd != '---' and pd != 'N/A']
-        ps_pd[1] = float(pd_lst[-1])
+        ps_pd[1] = round(float(pd_lst[-1]), 3)
         return ps_pd
 
 # The stage_assigner takes the service as an argument and populates an output
@@ -435,7 +413,22 @@ def loss_factor_func(serv, stg):
     except KeyError:
         return "none"
 
-
+def cyl_assigner(total_cyls, stg, serv):
+    cyl_output = ""
+    # 0-model, 1-bore, 2-rdp, 3-mawp, 4-throw, 5-stage, 6-action, 7-he spcrs, 8-ce spcrs, 9-pkt avail, 10-pkt used
+    for cyl in range(total_cyls):
+        cyl_output = cyl_output + (f"""         <Cylinder>
+                        <throws>{stages[f'Service {serv} Stage {int(stg + 1)} Throws'][cyl]}</throws>
+                        <model>{stages[f'Service {serv} Stage {stg + 1} Cylinder'][cyl][0]}</model>
+                        <bore_size>{stages[f'Service {serv} Stage {stg + 1} Cylinder'][cyl][1]}</bore_size>
+                        <action>{stages[f'Service {serv} Stage {stg + 1} Cylinder'][cyl][6]}</action>
+                        <CESpacers>{stages[f'Service {serv} Stage {stg + 1} Cylinder'][cyl][8]}</CESpacers>
+                        <HESpacers>{stages[f'Service {serv} Stage {stg + 1} Cylinder'][cyl][7]}</HESpacers>
+                        <HEPocket>{stages[f'Service {serv} Stage {stg + 1} Cylinder'][cyl][9]}</HEPocket>
+                        <HEPocketUsed>{stages[f'Service {serv} Stage {stg + 1} Cylinder'][cyl][10]}</HEPocketUsed>
+                    </Cylinder>
+        """)
+    return cyl_output
 def stage_assigner(service):
     output = ""
     for stage in range(int(stages[f'Service {service} Total Stages'])):
@@ -443,25 +436,40 @@ def stage_assigner(service):
                 	<number>{stage + 1}</number>
                     <suctionTemp>{stages[f'Service {service} Stage {stage + 1} Suction Temp']}</suctionTemp>
                     <coolerTemp>{stages[f'Service {service} Stage {stage + 1} Cooler Temp']}</coolerTemp>
-                	<Cylinder>
-                		<total>{stages[f'Service {service} Stage {stage + 1}']}</total>
-                        <throws>{', '.join(stages[f'Service {service} Stage {int(stage + 1)} Throws'])}</throws>
-                        <model>{stages[f'Service {service} Stage {stage + 1} Cylinder'][0]}</model>
-                        <mawp>{stages[f'Service {service} Stage {stage + 1} Cylinder'][3]}</mawp>
-                        <bore_size>{stages[f'Service {service} Stage {stage + 1} Cylinder'][1]}</bore_size>
-                        <action>{', '.join(stages[f'Service {service} Stage {int(stage + 1)} Action'])}</action>
-                        <CESpacers>{', '.join(stages[f'Service {service} Stage {int(stage + 1)} CE Spacers'])}</CESpacers>
-                        <HESpacers>{', '.join(stages[f'Service {service} Stage {int(stage + 1)} HE Spacers'])}</HESpacers>
-                        <HEPocket>{', '.join(stages[f'Service {service} Stage {int(stage + 1)} HE Pocket'])}</HEPocket>
-                        <HEPocketUsed>{', '.join(stages[f'Service {service} Stage {int(stage + 1)} HE Pocket Used'])}</HEPocketUsed>
-                        <loss_factor>{loss_factor_func(service, stage)}</loss_factor>
-                        <product_family>{product_family}</product_family>
-
-
-                	</Cylinder>
+                	<Cylinders>
+                        <total>{stages[f'Service {service} Stage {stage + 1}']}</total>
+                        {cyl_assigner(int(stages[f'Service {service} Stage {stage + 1}']), stage, service)}
+                	</Cylinders>
                 </Stage>
             """)
     return output
+
+# def stage_assigner(service):
+#     output = ""
+#     for stage in range(int(stages[f'Service {service} Total Stages'])):
+#         output = output + (f"""<Stage>
+#                 	<number>{stage + 1}</number>
+#                     <suctionTemp>{stages[f'Service {service} Stage {stage + 1} Suction Temp']}</suctionTemp>
+#                     <coolerTemp>{stages[f'Service {service} Stage {stage + 1} Cooler Temp']}</coolerTemp>
+#                 	<Cylinders>
+#                         <total>{stages[f'Service {service} Stage {stage + 1}']}</total>
+#                         <Cylinder>
+#                             <throws>{', '.join(stages[f'Service {service} Stage {int(stage + 1)} Throws'])}</throws>
+#                             <model>{stages[f'Service {service} Stage {stage + 1} Cylinder'][0]}</model>
+#                             <mawp>{stages[f'Service {service} Stage {stage + 1} Cylinder'][3]}</mawp>
+#                             <bore_size>{stages[f'Service {service} Stage {stage + 1} Cylinder'][1]}</bore_size>
+#                             <action>{', '.join(stages[f'Service {service} Stage {int(stage + 1)} Action'])}</action>
+#                             <CESpacers>{', '.join(stages[f'Service {service} Stage {int(stage + 1)} CE Spacers'])}</CESpacers>
+#                             <HESpacers>{', '.join(stages[f'Service {service} Stage {int(stage + 1)} HE Spacers'])}</HESpacers>
+#                             <HEPocket>{', '.join(stages[f'Service {service} Stage {int(stage + 1)} HE Pocket'])}</HEPocket>
+#                             <HEPocketUsed>{', '.join(stages[f'Service {service} Stage {int(stage + 1)} HE Pocket Used'])}</HEPocketUsed>
+#                             <loss_factor>{loss_factor_func(service, stage)}</loss_factor>
+#                             <product_family>{product_family}</product_family>
+#                         </Cylinder>
+#                 	</Cylinders>
+#                 </Stage>
+#             """)
+#     return output
 
 # temp_converter converts any temp to R.  Seems to consistently work.
 def temp_converter(suct_temp):
@@ -480,7 +488,9 @@ def temp_converter(suct_temp):
 #  select sour gas in that scenario
 def gas_type(sg):
     sgf = float(sg)
-    if sgf >= 0.6000 and sgf <= 1.1000:
+    if sgf < 1.4500 and sgf > 1.2000 and re.search('SOUR GAS', text):
+        return 'Sour Gas'
+    elif sgf >= 0.6000 and sgf <= 1.1000:
         return 'Field Gas'
     elif sgf > 1.1000 and sgf <=2.0000:
         return 'Heavy Hydrocarbons'
@@ -541,7 +551,6 @@ output_txt = fr"""<?xml version="1.0" encoding=UTF-8 ?>
 	</User>
 	<Compressor>
 		<RPM>{output_dict['Calc RPM']}</RPM>
-		<product_family>{frame_dict[output_dict['Frame'][-5:]]['product_family']}</product_family>
 		<model>{output_dict['Frame'][-5:-2]}</model>
 		<num_throws>{output_dict['Frame'][-1]}</num_throws>
         <Driver>
