@@ -228,6 +228,10 @@ output_dict['Pres Ratio F/F'] = re.search(r'Pres Ratio F/F(.*)', text).group(1).
 output_dict[f'Temp Suct, {temperature}'] = re.search(fr'Temp Suct, {temperature}(.*)', text).group(1).strip()
 output_dict[f'Temp Clr Disch, {temperature}'] = re.search(fr'Temp Clr Disch, {temperature}(.*)', text).group(1).strip()
 output_dict['Cylinder Data'] = re.search(r'Cylinder Data:(.*)', text).group(1).strip()
+# the Cyl Model and Pkt lines are a little different as they can wrap to the next lin in certain circumstances
+# the original logic is commented out below followed by logic that collects text wrapped to the next line.
+# Need further clarification about how wraps work in program output (same column next line or is
+# everything pushed over one column and the far right info wrapped to the next line)
 # output_dict['Cyl Model'] = re.search(r'Cyl Model(.*)', text).group(1).strip()
 output_dict['Cyl Model'] = re.search(r'Cyl Model(.*)Cyl Bore', text, re.DOTALL).group(1).replace("\n", "").strip()
 output_dict[f'Cyl Bore, {small_length}'] = re.search(fr'Cyl Bore, {small_length}(.*)', text).group(1).strip()
@@ -243,6 +247,8 @@ output_dict[f'HE Suct Gas Vel, {piston_speed}'] = re.search(fr'HE Suct Gas Vel, 
 output_dict[f'HE Disch Gas Vel, {piston_speed}'] = re.search(fr'HE Disch Gas Vel, {piston_speed}(.*)', text).group(1).strip()
 output_dict['HE Spcrs Used/Max'] = re.search(r'HE Spcrs Used/Max(.*)', text).group(1).strip()
 output_dict['HE Vol Pkt Avail'] = re.search(r'HE Vol Pkt Avail(.*)', text).group(1).strip()
+# Same as mentioned above, usine DOTALL flag to grab everything, including new lines, between
+# the search texts.
 # output_dict['Vol Pkt Used'] = re.search(r'Vol Pkt Used(.*)', text).group(1).strip()
 output_dict['Vol Pkt Used'] = re.search(r'Vol Pkt Used(.*)HE Min Clr', text, re.DOTALL).group(1).replace("\n", " ").strip()
 output_dict['HE Min Clr, %'] = re.search(r'HE Min Clr, %(.*)', text).group(1).strip()
@@ -259,7 +265,10 @@ output_dict['Gas Rod Ld Comp, %'] = re.search(r'Gas Rod Ld Comp, %(.*)', text).g
 output_dict['Gas Rod Ld Tens, %'] = re.search(r'Gas Rod Ld Tens, %(.*)', text).group(1).strip()
 output_dict['Gas Rod Ld Total, %'] = re.search(r'Gas Rod Ld Total, %(.*)', text).group(1).strip()
 output_dict[f'Xhd Pin Deg/%Rvrsl {force}'] = re.search(fr'Xhd Pin Deg/%Rvrsl {force}(.*)', text).group(1).strip()
-# output_dict['Flow Calc, MMSCFD'] = re.search(r'Flow Calc, MMSCFD(.*)', text).group(1).strip()
+# the 'Flow Calc, {power}' row heading is used twice on the perf report, once to denote
+# stage flow calc and again on a per cylinder basis.  Rather than destinguish between the two,
+# the below is just commented out.  Can address later if required.
+# output_dict['Flow Calc, {power}'] = re.search(r'Flow Calc, MMSCFD(.*)', text).group(1).strip()
 output_dict[f'Cyl {power}'] = re.search(fr'Cyl {power}(.*)', text).group(1).strip()
 
 
@@ -275,9 +284,22 @@ num_services = services_lst[-1]
 # print(num_services)
 #############################
 #############################
-# This is the problem.  The split on 1 drops the last service b/c its a single stage
-# cyls_list = [f'1{stage}'.split() for stage in output_dict['Stage Data'].split('1') if stage]
+# This was a problem.  The split on 1 drops the last service b/c its a single stage
+# Since there will always be at least 1 stage in each service, hard code "1" into the string.
+# cyls_list is a list comprehension.  We take the stage data line from the run report
+# and split it at the number 1.  The split is not inclusive so we end up with something
+# like ['', '   (SG) --- 2 3 4 ', '   (SG)'] which would represent a 2 service
+# machine with 4 stages on the 1st service and 1 stage on the 2nd service.
+# splitting on the leading character puts in an empty list entry to represent
+# what was ahead of the leading character so we slice the list from the first character
+# on using [1:].  Then in the list comprehension we add '1' to each list item to replace
+# the '1' that we split on (not inclusive) and then split that entry.  So the resultant list
+# is a list of lists, in this case [['1', '(SG)', '---', '2', '3', '4'], ['1', '(SG)']].
+# then we iterate through each list in the cyls_list list and using another list comprehension
+# keep each item that is not '(SG)'
 cyls_list = [f'1{stage}'.split() for stage in output_dict['Stage Data'].split('1')][1:]
+# print(cyls_list)
+
 for index in range(len(cyls_list)):
     cyls_list[index] = [cyl for cyl in cyls_list[index] if cyl != '(SG)']
 # print('cyls_list: ', cyls_list)
