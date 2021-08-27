@@ -309,7 +309,7 @@ for index in range(len(cyls_list)):
 # print('stages_list: ', stages_list)
 
 stg_data = [stg for stg in output_dict[f'Stage Data'].split() if stg != '(SG)']
-
+# print('stg_data: ', stg_data)
 
 def stg_data_checker(pos):
     if stg_data[pos] == '---':
