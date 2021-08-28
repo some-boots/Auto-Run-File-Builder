@@ -6,7 +6,7 @@ import os
 from frame_dict import frame_dict
 from loss_factor_dict import loss_factor_dict
 
-open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_report_2.PDF'
+open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_file.PDF'
 save_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_file.runM'
 
 # open_filepath = None
@@ -251,6 +251,7 @@ output_dict['HE Vol Pkt Avail'] = re.search(r'HE Vol Pkt Avail(.*)', text).group
 # the search texts.
 # output_dict['Vol Pkt Used'] = re.search(r'Vol Pkt Used(.*)', text).group(1).strip()
 output_dict['Vol Pkt Used'] = re.search(r'Vol Pkt Used(.*)HE Min Clr', text, re.DOTALL).group(1).replace("\n", " ").strip()
+# print(output_dict['Vol Pkt Used'])
 output_dict['HE Min Clr, %'] = re.search(r'HE Min Clr, %(.*)', text).group(1).strip()
 output_dict['HE Total Clr, %'] = re.search(r'HE Total Clr, %(.*)', text).group(1).strip()
 output_dict[f'CE Suct Gas Vel, {piston_speed}'] = re.search(fr'CE Suct Gas Vel, {piston_speed}(.*)', text).group(1).strip()
@@ -307,6 +308,15 @@ stages_list = {}
 for index in range(len(cyls_list)):
     stages_list[index] = [stage for stage in cyls_list[index] if stage != '---']
 # print('stages_list: ', stages_list)
+
+#The stg_data and stg_data_checker are used to keep track of multi-cylinder stages
+# the stg_data list is basically the same list at the cyls_list except it is not
+# broken up into sub-lists per service.  Could possibly change this to just join
+# the cyls_list but the code below also works.  Then the stg_data_checker function
+# recursively checks if the column in question has a '---' entry for the stage data,
+# if it does, we move back one column and run the function again, if the stage entry
+# is a number we know the cylinder in that column is the first or only one in that stage
+# and we can gather the relavent stage data from that column.
 
 stg_data = [stg for stg in output_dict[f'Stage Data'].split() if stg != '(SG)']
 # print('stg_data: ', stg_data)
@@ -454,6 +464,7 @@ def cyl_assigner(total_cyls, stg, serv):
                         <Cylinder>
                             <throw>{stages[f'Service {serv} Stage {int(stg + 1)} Throws'][cyl]}</throw>
                             <model>{stages[f'Service {serv} Stage {stg + 1} Cylinder'][cyl][0]}</model>
+                            <mawp>{stages[f'Service {serv} Stage {stg + 1} Cylinder'][cyl][3]}</mawp>
                             <bore_size>{stages[f'Service {serv} Stage {stg + 1} Cylinder'][cyl][1]}</bore_size>
                             <action>{stages[f'Service {serv} Stage {stg + 1} Cylinder'][cyl][6]}</action>
                             <CESpacers>{stages[f'Service {serv} Stage {stg + 1} Cylinder'][cyl][8]}</CESpacers>
@@ -615,7 +626,7 @@ print(output_txt)
 #  pound or two)
 
 
-# with open(save_filepath, mode='w', encoding='utf-8') as file:
-#     file.writelines(output_txt)
-#
-# os.startfile(save_filepath)
+with open(save_filepath, mode='w', encoding='utf-8') as file:
+    file.writelines(output_txt)
+
+os.startfile(save_filepath)
