@@ -153,7 +153,10 @@ output_dict['Project'] = re.search(r'Project:(.*)', text).group(1).strip()
 
 
 output_dict[f'Elevation']=re.search(fr'Elevation,{length}:(.*?)Barmtr', text).group(1).strip()
-output_dict[f'Barmtr,{pressure[:1]+"a"}'] = re.search(fr'Barmtr,{pressure[:-1]+"a"}:(.*?)Ambient', text).group(1).strip()
+if pressure == 'atm':
+    output_dict[f'Barmtr,{pressure}'] = re.search(fr'Barmtr,{pressure}:(.*?)Ambient', text).group(1).strip()
+else:
+    output_dict[f'Barmtr,{pressure[:1]+"a"}'] = re.search(fr'Barmtr,{pressure[:-1]+"a"}:(.*?)Ambient', text).group(1).strip()
 output_dict[f'Ambient,{temperature}'] = re.search(fr'Ambient,{temperature}:(.*?)Type', text).group(1).strip()
 output_dict['Driver Type'] = re.search(r'Type:(.*)', text).group(1).strip()
 
@@ -209,7 +212,7 @@ if len(output_dict[f'Avail HP'].split()) > 1:
     driver_aux = int(output_dict['Avail HP'].split()[1].replace("(", "").replace(")", ""))
 else:
     driver_aux = 0
-print(power_for_output)
+
 if power_for_output == 'kw':
     driver_rated_BHP = round(driver_rated_BHP * 1.34102, 0)
     driver_aux = round(driver_aux * 1.34102, 0)
@@ -239,8 +242,12 @@ output_dict['Cylinder Data'] = re.search(r'Cylinder Data:(.*)', text).group(1).s
 # output_dict['Cyl Model'] = re.search(r'Cyl Model(.*)', text).group(1).strip()
 output_dict['Cyl Model'] = re.search(r'Cyl Model(.*)Cyl Bore', text, re.DOTALL).group(1).replace("\n", "").strip()
 output_dict[f'Cyl Bore, {small_length}'] = re.search(fr'Cyl Bore, {small_length}(.*)', text).group(1).strip()
-output_dict[f'Cyl RDP (API), {pressure[:-1]+"g"}'] = re.search(fr'Cyl RDP \(API\), {pressure[:-1]+"g"}(.*)', text).group(1).strip()
-output_dict[f'Cyl MAWP, {pressure[:-1]+"g"}'] = re.search(fr'Cyl MAWP, {pressure[:-1]+"g"}(.*)', text).group(1).strip()
+if pressure == "atm":
+    output_dict[f'Cyl RDP (API), {pressure}'] = re.search(fr'Cyl RDP \(API\), {pressure}(.*)', text).group(1).strip()
+    output_dict[f'Cyl MAWP, {pressure}'] = re.search(fr'Cyl MAWP, {pressure}(.*)', text).group(1).strip()
+else:
+    output_dict[f'Cyl RDP (API), {pressure[:-1]+"g"}'] = re.search(fr'Cyl RDP \(API\), {pressure[:-1]+"g"}(.*)', text).group(1).strip()
+    output_dict[f'Cyl MAWP, {pressure[:-1]+"g"}'] = re.search(fr'Cyl MAWP, {pressure[:-1]+"g"}(.*)', text).group(1).strip()
 output_dict['Cyl Action'] = re.search(r'Cyl Action(.*)', text).group(1).strip()
 output_dict[f'Cyl Disp, {displacement}'] = re.search(fr'Cyl Disp, {displacement}(.*)', text).group(1).strip()
 output_dict[f'Pres Suct Intl, {pressure}'] = re.search(fr'Pres Suct Intl, {pressure}(.*)', text).group(1).strip()
@@ -355,10 +362,15 @@ for index in range(len(output_dict['Cyl Model'].split())):
     cylinders.append([
     output_dict['Cyl Model'].split()[index],
     output_dict[f'Cyl Bore, {small_length}'].split()[index],
-    output_dict[f'Cyl RDP (API), {pressure[:-1]+"g"}'].split()[index],
-    output_dict[f'Cyl MAWP, {pressure[:-1]+"g"}'].split()[index],
-    output_dict[f'Cylinder Data'].split('Throw')[index + 1],
     ])
+    if pressure == 'atm':
+        cylinders[index].append(output_dict[f'Cyl RDP (API), {pressure}'].split()[index])
+        cylinders[index].append(output_dict[f'Cyl MAWP, {pressure}'].split()[index])
+    else:
+        cylinders[index].append(output_dict[f'Cyl RDP (API), {pressure[:-1]+"g"}'].split()[index])
+        cylinders[index].append(output_dict[f'Cyl MAWP, {pressure[:-1]+"g"}'].split()[index])
+    cylinders[index].append(output_dict[f'Cylinder Data'].split('Throw')[index + 1])
+
     cylinders[index].append(stg_data_checker(index))
     cylinders[index].append(output_dict['Cyl Action'].split()[index])
     cylinders[index].append(output_dict['HE Spcrs Used/Max'].split()[index][0])
@@ -434,18 +446,48 @@ for service in range(int(num_services)):
 #   to the provided pressure value.  value is typically somewhere between 13.5 and
 #   14.7.  Need to clarify.
 
+# def pressure_corrector(col_start, tot_cyl):
+#     ps_pd = ["", ""]
+#     if g_or_abs == 'Gauge':
+#         ps_pd[0] = round(float(output_dict[f'Pres Suct Line, {pressure}'].split()[col_start]) + float(output_dict[f'Barmtr,{pressure[:1]+"a"}']), 3)
+#         pd_lst = [pd for pd in output_dict[f'Pres Disch Line, {pressure}'].split()[:col_start+tot_cyl] if pd != '---' and pd != 'N/A']
+#         ps_pd[1] = round(float(pd_lst[-1]) + float(output_dict[f'Barmtr,{pressure[:1]+"a"}']), 3)
+#         return ps_pd
+#     else:
+#         ps_pd[0] = round(float(output_dict[f'Pres Suct Line, {pressure}'].split()[col_start]), 3)
+#         pd_lst = [pd for pd in output_dict[f'Pres Disch Line, {pressure}'].split()[:col_start+tot_cyl] if pd != '---' and pd != 'N/A']
+#         ps_pd[1] = round(float(pd_lst[-1]), 3)
+#         return ps_pd
+
 def pressure_corrector(col_start, tot_cyl):
     ps_pd = ["", ""]
-    if g_or_abs == 'Gauge':
+    if g_or_abs == 'Gauge' and pressure != 'atm':
         ps_pd[0] = round(float(output_dict[f'Pres Suct Line, {pressure}'].split()[col_start]) + float(output_dict[f'Barmtr,{pressure[:1]+"a"}']), 3)
         pd_lst = [pd for pd in output_dict[f'Pres Disch Line, {pressure}'].split()[:col_start+tot_cyl] if pd != '---' and pd != 'N/A']
         ps_pd[1] = round(float(pd_lst[-1]) + float(output_dict[f'Barmtr,{pressure[:1]+"a"}']), 3)
-        return ps_pd
+
+    elif pressure == 'atm':
+        ps_pd[0] = round(float(output_dict[f'Pres Suct Line, {pressure}'].split()[col_start]) + float(output_dict[f'Barmtr,{pressure}']), 3)
+        pd_lst = [pd for pd in output_dict[f'Pres Disch Line, {pressure}'].split()[:col_start+tot_cyl] if pd != '---' and pd != 'N/A']
+        ps_pd[1] = round(float(pd_lst[-1]) + float(output_dict[f'Barmtr,{pressure}']), 3)
     else:
         ps_pd[0] = round(float(output_dict[f'Pres Suct Line, {pressure}'].split()[col_start]), 3)
         pd_lst = [pd for pd in output_dict[f'Pres Disch Line, {pressure}'].split()[:col_start+tot_cyl] if pd != '---' and pd != 'N/A']
         ps_pd[1] = round(float(pd_lst[-1]), 3)
-        return ps_pd
+
+    if pressure_for_output == "psi":
+        pass
+    elif pressure_for_output == "bar":
+        ps_pd = [round(p * 14.5038, 3) for p in ps_pd]
+    elif pressure_for_output == "kPa":
+        ps_pd = [round(p * 0.145038, 3) for p in ps_pd]
+    elif pressure_for_output == "MPa":
+        ps_pd = [round(p * 145.038, 3) for p in ps_pd]
+    elif pressure_for_output == "kg/cm2":
+        ps_pd = [round(p * 14.2233, 3) for p in ps_pd]
+    elif pressure_for_output == "atm":
+        ps_pd = [round(p * 14.6959, 3) for p in ps_pd]
+    return ps_pd
 
 # The stage_assigner takes the service as an argument and populates an output
 #  string with each cylinder of that stage in the runM format.
