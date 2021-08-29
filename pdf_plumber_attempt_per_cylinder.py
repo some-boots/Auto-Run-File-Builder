@@ -6,8 +6,8 @@ import os
 from frame_dict import frame_dict
 from loss_factor_dict import loss_factor_dict
 
-open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_file.PDF'
-save_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\test_run_file.runM'
+open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\Tests\Test_5.PDF'
+save_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\Tests\Test_5.runM'
 
 # open_filepath = None
 # save_filepath = None
@@ -206,9 +206,13 @@ else:
     # driver_aux = "0"
 
 if len(output_dict[f'Avail HP'].split()) > 1:
-    driver_aux = output_dict['Avail HP'].split()[1].replace("(", "").replace(")", "")
+    driver_aux = int(output_dict['Avail HP'].split()[1].replace("(", "").replace(")", ""))
 else:
-    driver_aux = "0"
+    driver_aux = 0
+print(power_for_output)
+if power_for_output == 'kw':
+    driver_rated_BHP = round(driver_rated_BHP * 1.34102, 0)
+    driver_aux = round(driver_aux * 1.34102, 0)
 
 output_dict['Services'] = re.search(r'Services(.*)', text).group(1).strip()
 output_dict['Gas Model'] = re.search(r'Gas Model(.*)', text).group(1).strip()
