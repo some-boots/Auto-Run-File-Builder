@@ -586,6 +586,27 @@ def gas_type(sg):
     elif sgf >= 0.5500 and sgf <0.6000:
         return 'Pipeline Quality'
 
+def volume_converter(vol_type, vol_num):
+    if vol_type == "MMSCFD":
+        return vol_num
+    elif vol_type == "MSCFD":
+        return round(float(vol_num) * 0.001, 3)
+    elif vol_type == "SCFH":
+        return round(float(vol_num) * 0.000024, 3)
+    elif vol_type == "SCFM":
+        return round(float(vol_num) * 0.00144, 3)
+    elif vol_type == "lb/h":
+        return round(float(vol_num) / 2066.953, 3)
+    elif vol_type == "Nm3/h":
+        return round(float(vol_num) / 1116.641, 3)
+    elif vol_type == "Sm3/h":
+        return round(float(vol_num) / 1177.961, 3)
+    elif vol_type == "E3m3/D":
+        return round(float(vol_num) / 28.271, 3)
+    elif vol_type == "kg/h":
+        return round(float(vol_num) / 937.555, 3)
+
+
 # service_assigner loops through each service of the machine and populates an
 #  output string with the required information in runM format.  it calls the
 #  stage_assigner function for each service to populate the stages portion and
@@ -595,7 +616,7 @@ def service_assigner():
     for service in range(1, int(stages[f'Total Services']) + 1):
         output = output + f"""
         <Service>
-            <target_flow>{output_dict[f'Flow Calc, {flow}'].split()[stages[f'Service {service} Column Start']]}</target_flow>
+            <target_flow>{volume_converter(flow, output_dict[f'Flow Calc, {flow}'].split()[stages[f'Service {service} Column Start']])}</target_flow>
             <target_bhp>{output_dict[f'Calc {power}']}</target_bhp>
             <suction_pressure>{pressure_corrector(stages[f'Service {service} Column Start'], stages[f'Service {service} Total Cylinders'])[0]}</suction_pressure>
             <discharge_pressure>{pressure_corrector(stages[f'Service {service} Column Start'], stages[f'Service {service} Total Cylinders'])[1]}</discharge_pressure>
