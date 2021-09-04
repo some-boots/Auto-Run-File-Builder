@@ -6,12 +6,12 @@ import os
 from frame_dict import frame_dict
 from loss_factor_dict import loss_factor_dict
 
-open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\Tests\Test_5.PDF'
-save_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\Tests\Test_5.runM'
+open_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\Tests\Test_15_F_9.PDF'
+save_filepath = r'C:\Users\Jay\Desktop\Python\Auto Run File Builder\Tests\Test_15_F_9.runM'
 
 # open_filepath = None
 # save_filepath = None
-
+#
 # def open_file():
 #     global open_filepath
 #     open_filepath = askopenfilename(filetypes=[('PDF', '*.pdf')])
@@ -214,8 +214,8 @@ else:
     driver_aux = 0
 
 if power_for_output == 'kw':
-    driver_rated_BHP = round(driver_rated_BHP * 1.34102, 0)
-    driver_aux = round(driver_aux * 1.34102, 0)
+    driver_rated_BHP = round(int(driver_rated_BHP) * 1.34102, 0)
+    driver_aux = round(int(driver_aux) * 1.34102, 0)
 
 output_dict['Services'] = re.search(r'Services(.*)', text).group(1).strip()
 output_dict['Gas Model'] = re.search(r'Gas Model(.*)', text).group(1).strip()
@@ -239,8 +239,21 @@ output_dict['Cylinder Data'] = re.search(r'Cylinder Data:(.*)', text).group(1).s
 # the original logic is commented out below followed by logic that collects text wrapped to the next line.
 # Need further clarification about how wraps work in program output (same column next line or is
 # everything pushed over one column and the far right info wrapped to the next line)
+#######################
+#######################
+# this should probably be reworked into a function
 # output_dict['Cyl Model'] = re.search(r'Cyl Model(.*)', text).group(1).strip()
-output_dict['Cyl Model'] = re.search(r'Cyl Model(.*)Cyl Bore', text, re.DOTALL).group(1).replace("\n", "").strip()
+# output_dict['Cyl Model'] = re.search(r'Cyl Model(.*)Cyl Bore', text, re.DOTALL).group(1).replace("\n", "").strip()
+output_dict['Cyl Model'] = re.search(r'Cyl Model(.*)Cyl Bore', text, re.DOTALL).group(1).strip()
+if "\n" in output_dict['Cyl Model']:
+    cyl_model_line_split = [item.split() for item in output_dict['Cyl Model'].split("\n")]
+    counter = 0
+    for indx in range(len(cyl_model_line_split[0])):
+        if cyl_model_line_split[0][indx].endswith('-'):
+            cyl_model_line_split[0][indx] = cyl_model_line_split[0][indx] + cyl_model_line_split[1][counter]
+            counter +=1
+    output_dict['Cyl Model'] = " ".join(cyl_model_line_split[0])
+
 output_dict[f'Cyl Bore, {small_length}'] = re.search(fr'Cyl Bore, {small_length}(.*)', text).group(1).strip()
 if pressure == "atm":
     output_dict[f'Cyl RDP (API), {pressure}'] = re.search(fr'Cyl RDP \(API\), {pressure}(.*)', text).group(1).strip()
@@ -360,9 +373,19 @@ cylinders = []
 # 0-model, 1-bore, 2-rdp, 3-mawp, 4-throw, 5-stage, 6-action, 7-he spcrs, 8-ce spcrs, 9-pkt avail, 10-pkt used
 for index in range(len(output_dict['Cyl Model'].split())):
     cylinders.append([
-    output_dict['Cyl Model'].split()[index],
-    output_dict[f'Cyl Bore, {small_length}'].split()[index],
+    # output_dict['Cyl Model'].split()[index],
+    # output_dict[f'Cyl Bore, {small_length}'].split()[index],
     ])
+    if output_dict['Cyl Model'].split()[index].endswith("U") and output_dict['Frame'].replace("(ELP)", "")[:-2].strip() != "KBU":
+        cylinders[index].append(output_dict['Cyl Model'].split()[index][:-1])
+    elif output_dict['Cyl Model'].split()[index].endswith("UU"):
+        cylinders[index].append(output_dict['Cyl Model'].split()[index][:-1])
+    else:
+        cylinders[index].append(output_dict['Cyl Model'].split()[index])
+    if eng_met == "English":
+        cylinders[index].append(output_dict[f'Cyl Bore, {small_length}'].split()[index])
+    else:
+        cylinders[index].append(f"{float(output_dict[f'Cyl Bore, {small_length}'].split()[index]) * 0.0393701:.3f}")
     if pressure == 'atm':
         cylinders[index].append(output_dict[f'Cyl RDP (API), {pressure}'].split()[index])
         cylinders[index].append(output_dict[f'Cyl MAWP, {pressure}'].split()[index])
@@ -526,7 +549,7 @@ def stage_assigner(service):
                 <Stage>
                 	<number>{stage + 1}</number>
                     <suctionTemp>{stages[f'Service {service} Stage {stage + 1} Suction Temp']}</suctionTemp>
-                    <coolerTemp>{stages[f'Service {service} Stage {stage + 1} Cooler Temp']}</coolerTemp>
+                    <coolerTemp>{cooler_temp_converter(stages[f'Service {service} Stage {stage + 1} Cooler Temp'])}</coolerTemp>
                 	<Cylinders>
                         <total>{stages[f'Service {service} Stage {stage + 1}']}</total>{cyl_assigner(int(stages[f'Service {service} Stage {stage + 1}']), stage, service)}
                 	</Cylinders>
@@ -560,7 +583,8 @@ def stage_assigner(service):
 #             """)
 #     return output
 
-# temp_converter converts any temp to R.  Seems to consistently work.
+# temp_converter converts any temp to R.  Seems to consistently work. As of 9/1/21 Ariel7
+# expects suction temp in R but cooler temp in F.  Need to discuss with Tim.
 def temp_converter(suct_temp):
     if temperature =="F":
         suct_temp_converted = round(suct_temp + 459.67, 2)
@@ -571,6 +595,26 @@ def temp_converter(suct_temp):
     else:
         suct_temp_converted = suct_temp
     return suct_temp_converted
+
+def cooler_temp_converter(cool_temp):
+    if temperature =="F":
+        temp_converted = cool_temp
+    elif cool_temp == "N/A":
+        temp_converted = cool_temp
+    elif temperature == "C":
+        temp_converted = round(float(cool_temp) * 9/5 + 32, 2)
+    elif temperature == "K":
+        temp_converted = round((float(cool_temp) -273.15)* 9/5 + 32, 2)
+    else:
+        temp_converted = round(float(cool_temp) - 459.67 , 2)
+    return temp_converted
+
+
+def elevation_converter(elevation):
+    if eng_met == 'English':
+        return elevation
+    else:
+        return round(float(elevation) * 3.28084, 3)
 
 # gas_type looks at the sg and takes a guess at the gas_type based on that.
 #  Future improvement might be to search the text string for 'Sour Gas' and
@@ -616,7 +660,7 @@ def service_assigner():
     for service in range(1, int(stages[f'Total Services']) + 1):
         output = output + f"""
         <Service>
-            <target_flow>{volume_converter(flow, output_dict[f'Flow Calc, {flow}'].split()[stages[f'Service {service} Column Start']])}</target_flow>
+            <target_flow>{volume_converter(flow, output_dict[f'Target Flow, {flow}'].split()[stages[f'Service {service} Column Start']])}</target_flow>
             <target_bhp>{output_dict[f'Calc {power}']}</target_bhp>
             <suction_pressure>{pressure_corrector(stages[f'Service {service} Column Start'], stages[f'Service {service} Total Cylinders'])[0]}</suction_pressure>
             <discharge_pressure>{pressure_corrector(stages[f'Service {service} Column Start'], stages[f'Service {service} Total Cylinders'])[1]}</discharge_pressure>
@@ -656,11 +700,11 @@ output_txt = fr"""<?xml version="1.0" encoding=UTF-8 ?>
 		<project>{output_dict['Project']}</project>
 		<location>NA</location>
 		<country>NA</country>
-		<elevation>{output_dict["Elevation"]}</elevation>
+		<elevation>{elevation_converter(output_dict["Elevation"])}</elevation>
 	</User>
 	<Compressor>
 		<RPM>{output_dict['Calc RPM']}</RPM>
-		<model>{output_dict['Frame'][-5:-2]}</model>
+		<model>{output_dict['Frame'].replace("(ELP)", "")[:-2].strip()}</model>
 		<num_throws>{output_dict['Frame'][-1]}</num_throws>
         <Driver>
             <type>{output_dict['Driver Type'].strip()}</type>
