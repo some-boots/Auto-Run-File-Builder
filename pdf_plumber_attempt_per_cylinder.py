@@ -506,13 +506,13 @@ def pressure_corrector(col_start, tot_cyl):
 
 def mawp_corrector(press):
     if pressure_for_output == "psi":
-        pass
+        return press
     elif pressure_for_output == "bar":
         return int(5 * round((float(press) * 14.5038)/5))
     elif pressure_for_output == "kPa":
         return int(5 * round((float(press) * 0.145038)/5))
     elif pressure_for_output == "MPa":
-        return int(5 * round((float(press) * 145.038)/5))
+        return int(5 * round((float(press) * 145.03774)/5)) #MPa cylinder MAWP in program might be a little off
     elif pressure_for_output == "kg/cm2":
         return int(5 * round((float(press) * 14.2233)/5))
     elif pressure_for_output == "atm":
