@@ -166,7 +166,7 @@ def run_calcs():
         output_dict[f'Temp Suct, {temperature}'] = re.search(fr'Temp Suct, {temperature}(.*)', text).group(1).strip()
         output_dict[f'Temp Clr Disch, {temperature}'] = re.search(fr'Temp Clr Disch, {temperature}(.*)', text).group(1).strip()
         output_dict['Cylinder Data'] = re.search(r'Cylinder Data:(.*)', text).group(1).strip()
-        # the Cyl Model and Pkt lines are a little different as they can wrap to the next lin in certain circumstances
+        # the Cyl Model and Pkt lines are a little different as they can wrap to the next line in certain circumstances
         # the original logic is commented out below followed by logic that collects text wrapped to the next line.
         # Need further clarification about how wraps work in program output (same column next line or is
         # everything pushed over one column and the far right info wrapped to the next line)
@@ -202,7 +202,7 @@ def run_calcs():
         output_dict[f'HE Disch Gas Vel, {piston_speed}'] = re.search(fr'HE Disch Gas Vel, {piston_speed}(.*)', text).group(1).strip()
         output_dict['HE Spcrs Used/Max'] = re.search(r'HE Spcrs Used/Max(.*)', text).group(1).strip()
         output_dict['HE Vol Pkt Avail'] = re.search(r'HE Vol Pkt Avail(.*)', text).group(1).strip()
-        # Same as mentioned above, usine DOTALL flag to grab everything, including new lines, between
+        # Same as mentioned above, using DOTALL flag to grab everything, including new lines, between
         # the search texts.
         # output_dict['Vol Pkt Used'] = re.search(r'Vol Pkt Used(.*)', text).group(1).strip()
         output_dict['Vol Pkt Used'] = re.search(r'Vol Pkt Used(.*)HE Min Clr', text, re.DOTALL).group(1).replace("\n", " ").strip()
@@ -222,7 +222,7 @@ def run_calcs():
         output_dict['Gas Rod Ld Total, %'] = re.search(r'Gas Rod Ld Total, %(.*)', text).group(1).strip()
         output_dict[f'Xhd Pin Deg/%Rvrsl {force}'] = re.search(fr'Xhd Pin Deg/%Rvrsl {force}(.*)', text).group(1).strip()
         # the 'Flow Calc, {power}' row heading is used twice on the perf report, once to denote
-        # stage flow calc and again on a per cylinder basis.  Rather than destinguish between the two,
+        # stage flow calc and again on a per cylinder basis.  Rather than distinguish between the two,
         # the below is just commented out.  Can address later if required.
         # output_dict['Flow Calc, {power}'] = re.search(r'Flow Calc, MMSCFD(.*)', text).group(1).strip()
         output_dict[f'Cyl {power}'] = re.search(fr'Cyl {power}(.*)', text).group(1).strip()
@@ -234,7 +234,16 @@ def run_calcs():
         #  the compressor has, how many are associated with each service, each stage,
         #  and which cylinders those are (bore, nominal, mawp).  In this section we
         #  mine out this information and add it ot the stages dict.
+
         services_lst = [service for service in output_dict['Services'].split() if service.isdigit()]
+        #Aparently on some run files, the services line wouldn't include any numbers, at least
+        # in some single stg applications.  Rather than showing "Services Service 1" the run report would
+        # read "Services Gathering".  Not sure how this worked for multiservice applications but
+        # to handle the example I have the logic below checks to see if the services list was
+        # populated with anything (using the .isdigit()) and if not adds a service to the list
+        # b/c every application will have at least one service.
+        # Need more information of how multi service applications would be handled in this vintage of
+        # the performance software.
         if len(services_lst) < 1:
             services_lst = [1]
         # print(services_lst)
@@ -286,7 +295,15 @@ def run_calcs():
             else:
                 return 'Stage ' + stg_data[pos]
 
-
+        #This logic uses re.split to search the output_dict volume pocket line
+        # on multiple delimiters to split the pocket line into useable information.
+        # since the pocket units can be of several different types but the type is
+        # not called out in the row heading, we search on all possible options.
+        # The re.split search is inclusive of the delimiter but it splits the
+        # delimiter off from the item so we search the list for every delimiter
+        # and when we find one, we add the delimiter to the list item immediately
+        # before that list position.  Then we use a list comprehension to drop all
+        # the delimiter items that are not connected to a value.
         if eng_met == 'English':
             pkt_used = re.split(r"(%|turns|in|Pos, in|No Pkt)", output_dict['Vol Pkt Used'])
             for index in range(len(pkt_used)):
@@ -302,7 +319,10 @@ def run_calcs():
                         pkt_used[index-1] += delim
             pkt_used = [item.strip() for item in pkt_used if item.strip() and item not in ["%", "turns", "mm", "Pos, cm"]]
 
-
+        #Here we loop through the cylinder model line and create a list with the cylinder specific
+        # information for every throw of the machine.  We have to use logic to handle the
+        # bore and MAWP/RDP since these can vary dependent on the units used.
+        # The cylinders list ends up being a list of lists.
         cylinders = []
         # 0-model, 1-bore, 2-rdp, 3-mawp, 4-throw, 5-stage, 6-action, 7-he spcrs, 8-ce spcrs, 9-pkt avail, 10-pkt used
         for index in range(len(output_dict['Cyl Model'].split())):
@@ -331,6 +351,25 @@ def run_calcs():
         # for cyl in cylinders:
         #     print(cyl)
 
+        #Here we create the stages dict which will hold all of the relavent information
+        # about each stage.  This will allow us to programatically call this information
+        # for any combination of stage and service when we are creating the output text.
+        # First, we capture the total number of services, then for each service we
+        # loop through and capture the number to stages per service and the number of
+        # cylinders per service.  Next we look at the index of the cyls_list list
+        # that corresponds to our current service.  Each entry of the cyls_list
+        # will be something like ['1', '---', '---', '---'], which would represent
+        # a 4 throw single stage.  So we walk through the entry and if the list item
+        # is a number, we set the 'Service x Stage y' dict key to the value 1.  Then
+        # we set the current_stage to the digit which is the 'throw' in our loop.
+        # If the next list item is a non-digit, it '---', we add 1 to the
+        # 'Service x Stage y' dict key's value but do not change the current_stage.
+        # This allows us to use the 'Service x Stage {current_stage}' key to set the
+        # value which is handy since using 'Service x Stage {throw}' like we did
+        # initially wouldn't work since throw counts up each step regardless of
+        # weather it's a digit or not.  We add 1 to the Service x Stage y key
+        # for every step until we reach another digit and when another digit is
+        # reached we set a new Service x Stage y key equal to 1 and repeat the process.
         stages = {}
         stages[f'Total Services'] = num_services
         for service in range(int(num_services)):
@@ -345,6 +384,17 @@ def run_calcs():
                     stages[f'Service {int(service) + 1} Stage {current_stage}'] += 1
 
 
+        #Here we create a counter variable column_location and step through the columns
+        # of the performance report.  For each service we set which column it starts in
+        # then for each stage in that service (already added to the stages dict above)
+        # we assing relavent information to the stages dict.  We create a the temp_loc
+        # counter and set it equal to column_location current value.  Then we add the
+        # total number of cylinders in that stage to column_location.  Next we create
+        # a number of local variables to keep track of throws, action spacers etc and
+        # assign them the respective values in the temp_loc's column before incrementing
+        # temp_loc by 1.  We then recursively add column information to these local variables
+        # until the temp_loc equals the new column_location at which point we assign each
+        # local variable to a key in the stages dict.
         column_location = 0
         for service in range(int(num_services)):
             stages[f'Service {service + 1} Column Start'] = column_location
@@ -453,8 +503,7 @@ def run_calcs():
             elif pressure_for_output == "atm":
                 return int(5 * round((float(press) * 14.6959)/5))
 
-        # The stage_assigner takes the service as an argument and populates an output
-        #  string with each cylinder of that stage in the runM format.
+
 
 
         def cyl_assigner(total_cyls, stg, serv):
@@ -474,6 +523,9 @@ def run_calcs():
                                     <HEPocketUsed>{stages[f'Service {serv} Stage {stg + 1} Cylinder'][cyl][10]}</HEPocketUsed>
                                 </Cylinder>""")
             return cyl_output
+
+        # The stage_assigner takes the service as an argument and populates an output
+        #  string with each cylinder of that stage in the runM format.
         def stage_assigner(service):
             output = ""
             for stage in range(int(stages[f'Service {service} Total Stages'])):
@@ -489,7 +541,7 @@ def run_calcs():
             return output
 
         # temp_converter converts any temp to R.  Seems to consistently work. As of 9/1/21 Ariel7
-        # expects suction temp in R but cooler temp in F.  Need to discuss with Tim.
+        # expects suction temp in R but cooler temp in F.
         def temp_converter(suct_temp):
             if temperature =="F":
                 suct_temp_converted = round(suct_temp + 459.67, 2)
@@ -515,6 +567,7 @@ def run_calcs():
             return temp_converted
 
 
+        # Converts elevation to meters if required
         def elevation_converter(elevation):
             if eng_met == 'English':
                 return elevation
@@ -522,8 +575,9 @@ def run_calcs():
                 return round(float(elevation) * 3.28084, 3)
 
         # gas_type looks at the sg and takes a guess at the gas_type based on that.
-        #  Future improvement might be to search the text string for 'Sour Gas' and
-        #  select sour gas in that scenario
+        #  Searches the text string for the phrase 'Sour Gas' and if it is found
+        # the gas type is set to sour gas, otherwise the gas type is set based
+        # on a guess at the SG.
         def gas_type(sg):
             sgf = float(sg)
             if sgf < 1.4500 and sgf > 1.2000 and re.search('SOUR GAS', text):
@@ -535,6 +589,9 @@ def run_calcs():
             elif sgf >= 0.5500 and sgf <0.6000:
                 return 'Pipeline Quality'
 
+
+        # volume_converter converts any volume units to MMSCFD.  As of this writing
+        # Ariel 7 does not set the correct volume units when provided kg/h or lb/h
         def volume_converter(vol_type, vol_num):
             if vol_type == "MMSCFD":
                 return vol_num
@@ -640,6 +697,16 @@ def run_calcs():
 ###################################################
 ###################################################
 ###################################################
+
+#This is the start of the GUI portion.  All of the code up to here is saved in
+# the run_calcs function so none of it will run until the take_ent() function
+# is activated by clicking the next button.
+
+#open_file and save_file open dialogue boxes that direct you to choose a source
+# .pdf and the save location for the resultant runM.  The variable are made
+# global so that they could be seen outside of the GUI namespace.  There is probably
+# another way around this but these two don't pollute the global name space enough
+# to cause an issue.
 def open_file():
     global open_filepath
     open_filepath = askopenfilename(filetypes=[('PDF', '*.pdf')])
