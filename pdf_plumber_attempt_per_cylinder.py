@@ -235,7 +235,8 @@ def run_calcs():
         #  and which cylinders those are (bore, nominal, mawp).  In this section we
         #  mine out this information and add it ot the stages dict.
 
-        services_lst = [service for service in output_dict['Services'].split() if service.isdigit()]
+        # services_lst = [service for service in output_dict['Services'].split() if service.isdigit()]
+        services_lst = [service for service in output_dict['Gas Model'].split()]
         #Aparently on some run files, the services line wouldn't include any numbers, at least
         # in some single stg applications.  Rather than showing "Services Service 1" the run report would
         # read "Services Gathering".  Not sure how this worked for multiservice applications but
@@ -248,7 +249,9 @@ def run_calcs():
             services_lst = [1]
         # print(services_lst)
         # print(len(services_lst))
-        num_services = services_lst[-1]
+        
+        # num_services = services_lst[-1]
+        num_services = len(services_lst)
         # print(num_services)
         #############################
         #############################
