@@ -236,7 +236,7 @@ def run_calcs():
         #  mine out this information and add it ot the stages dict.
 
         # services_lst = [service for service in output_dict['Services'].split() if service.isdigit()]
-        services_lst = [service for service in output_dict['Gas Model'].split()]
+        services_lst = [stage for stage in output_dict['Stage Data'].split() if stage == '1']
         #Aparently on some run files, the services line wouldn't include any numbers, at least
         # in some single stg applications.  Rather than showing "Services Service 1" the run report would
         # read "Services Gathering".  Not sure how this worked for multiservice applications but
@@ -245,11 +245,11 @@ def run_calcs():
         # b/c every application will have at least one service.
         # Need more information of how multi service applications would be handled in this vintage of
         # the performance software.
-        if len(services_lst) < 1:
-            services_lst = [1]
+        # if len(services_lst) < 1:
+        #     services_lst = [1]
         # print(services_lst)
         # print(len(services_lst))
-        
+
         # num_services = services_lst[-1]
         num_services = len(services_lst)
         # print(num_services)
